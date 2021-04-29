@@ -10,7 +10,7 @@ import (
 	"github.com/hyperledger/aries-framework-go/pkg/doc/verifiable"
 )
 
-// SignCredential creates a Verifiable Credential by adding a proof to the Credential.
+// SignCredential creates a verifiable credential by adding a proof to the credential.
 func SignCredential(credential []byte, privKey []byte, opts *ProofOptions) ([]byte, error) {
 	cred, err := verifiable.ParseCredential(credential, verifiable.WithDisabledProofCheck())
 	if err != nil {
@@ -24,6 +24,7 @@ func SignCredential(credential []byte, privKey []byte, opts *ProofOptions) ([]by
 	return cred.MarshalJSON()
 }
 
+// VerifyCredential verifies a proof in the verifiable credential.
 func VerifyCredential(vc []byte, pubKey []byte, pubKeyType string) error {
 	_, err := verifiable.ParseCredential(
 		vc,
@@ -35,12 +36,12 @@ func VerifyCredential(vc []byte, pubKey []byte, pubKeyType string) error {
 	return nil
 }
 
-// DeriveCredential derives a new Verifiable Credential using selection disclosure (to be implemented).
+// DeriveCredential derives a new verifiable credential using selection disclosure (to be implemented).
 func DeriveCredential(vc []byte) ([]byte, error) {
 	return nil, fmt.Errorf("not implemented")
 }
 
-// SignPresentation creates a Verifiable Presentation by adding a proof to the Presentation.
+// SignPresentation creates a verifiable presentation by adding a proof to the presentation.
 func SignPresentation(presentation []byte, privKey []byte, opts *ProofOptions) ([]byte, error) {
 	pres, err := verifiable.ParsePresentation(presentation, verifiable.WithPresDisabledProofCheck())
 	if err != nil {
@@ -54,6 +55,7 @@ func SignPresentation(presentation []byte, privKey []byte, opts *ProofOptions) (
 	return pres.MarshalJSON()
 }
 
+// VerifyPresentation verifies a proof in the verifiable presentation.
 func VerifyPresentation(vp []byte, pubKey []byte, pubKeyType string) error {
 	_, err := verifiable.ParsePresentation(
 		vp,
@@ -65,6 +67,7 @@ func VerifyPresentation(vp []byte, pubKey []byte, pubKeyType string) error {
 	return nil
 }
 
+// GetCredentials returns a Iterator that contains verifiable credentials in the verifiable presentation.
 func GetCredentials(presentation []byte) (*Iterator, error) {
 	pres, err := verifiable.ParsePresentation(presentation, verifiable.WithPresDisabledProofCheck())
 	if err != nil {
@@ -86,6 +89,8 @@ func GetCredentials(presentation []byte) (*Iterator, error) {
 	return newIterator(jsonCredentials), nil
 }
 
+// provable is an interface that represent the return value of ParseCredential() and ParsePresentation() defined in the aries-framework-go.
+// This type can be passed to the AddLinkedDataProof() defined in the aries-framework-go.
 type provable interface {
 	AddLinkedDataProof(context *verifiable.LinkedDataProofContext, jsonldOpts ...jsonld.ProcessorOpts) error
 }
@@ -93,13 +98,15 @@ type provable interface {
 // ProofOptions is model to allow the dynamic proofing options by the user.
 type ProofOptions struct {
 	VerificationMethod string `json:"verificationMethod,omitempty"`
+	SignatureType      string `json:"signatureType,omitempty"`
 	Domain             string `json:"domain,omitempty"`
 	Challenge          string `json:"challenge,omitempty"`
-	SignatureType      string `json:"signatureType,omitempty"`
 }
 
 func addProof(provableData provable, privKey []byte, opts *ProofOptions) error {
+	// TODO: support more sig types
 	sigSuite := ecdsasecp256k1signature2019.New(suite.WithSigner(newSecp256k1Signer(privKey)))
+
 	signingCtx := &verifiable.LinkedDataProofContext{
 		VerificationMethod:      opts.VerificationMethod,
 		SignatureRepresentation: verifiable.SignatureProofValue,

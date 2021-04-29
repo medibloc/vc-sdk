@@ -9,6 +9,7 @@ import (
 	"github.com/hyperledger/aries-framework-go/pkg/doc/verifiable"
 )
 
+// Credential is a helper model to assemble an W3C compatible JSON document.
 type Credential struct {
 	Context               string
 	ID                    string
@@ -19,6 +20,7 @@ type Credential struct {
 	CredentialSubjectJSON []byte
 }
 
+// MarshalJSON returns a JSON document compatible with the W3C standard.
 func (c *Credential) MarshalJSON() ([]byte, error) {
 	ariesCredential, err := c.toAriesCredential()
 	if err != nil {
@@ -65,12 +67,14 @@ func toAriesTime(str string) (*util.TimeWithTrailingZeroMsec, error) {
 	return util.NewTime(t), nil
 }
 
+// Presentation is a helper model to assemble an W3C compatible JSON document.
 type Presentation struct {
 	ID                    string
 	Holder                string
 	verifiableCredentials []*verifiable.Credential
 }
 
+// AddVerifiableCredential adds a raw JSON of a verifiable credential to the Presentation.
 func (p *Presentation) AddVerifiableCredential(vcBytes []byte) error {
 	vc, err := verifiable.ParseCredential(vcBytes, verifiable.WithDisabledProofCheck())
 	if err != nil {
@@ -81,6 +85,7 @@ func (p *Presentation) AddVerifiableCredential(vcBytes []byte) error {
 	return nil
 }
 
+// MarshalJSON returns a JSON document compatible with the W3C standard.
 func (p *Presentation) MarshalJSON() ([]byte, error) {
 	ariesPresentation, err := p.toAriesPresentation()
 	if err != nil {
@@ -103,6 +108,7 @@ func (p *Presentation) toAriesPresentation() (*verifiable.Presentation, error) {
 	return presentation, nil
 }
 
+// Iterator is an iterator of byte slices (because gomobile doesn't support the 2-dimension slice types).
 type Iterator struct {
 	items [][]byte
 	index int
