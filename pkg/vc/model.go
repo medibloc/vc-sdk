@@ -102,3 +102,32 @@ func (p *Presentation) toAriesPresentation() (*verifiable.Presentation, error) {
 
 	return presentation, nil
 }
+
+type Iterator struct {
+	items [][]byte
+	index int
+}
+
+func newIterator(items [][]byte) *Iterator {
+	return &Iterator{
+		items: items,
+		index: 0,
+	}
+}
+
+func (i *Iterator) Len() int {
+	if i.items == nil {
+		return 0
+	}
+	return len(i.items)
+}
+
+func (i *Iterator) Next() []byte {
+	if i.index >= i.Len() {
+		return nil
+	}
+
+	ret := i.items[i.index]
+	i.index++
+	return ret
+}

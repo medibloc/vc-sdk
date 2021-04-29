@@ -9,7 +9,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestFoo(t *testing.T) {
+func TestFullScenario(t *testing.T) {
 	cred := `{"@context": ["https://www.w3.org/2018/credentials/v1","https://www.w3.org/2018/credentials/examples/v1"],
 	"issuer": "did:panacea:BFbUAkxqj3cXXYdNK9FAF9UuEmm7jCT5T77rXhBCvy2K",
 	"id": "https://abc.com/1",
@@ -61,4 +61,14 @@ func TestFoo(t *testing.T) {
 
 	err = VerifyPresentation(vpBytes, privKey.PubKey().SerializeUncompressed(), "EcdsaSecp256k1VerificationKey2019")
 	require.NoError(t, err)
+
+	iterator, err := GetCredentials(vpBytes)
+	require.NoError(t, err)
+	require.NotNil(t, iterator)
+	require.Equal(t, 1, iterator.Len())
+
+	err = VerifyCredential(iterator.Next(), privKey.PubKey().SerializeUncompressed(), "EcdsaSecp256k1VerificationKey2019")
+	require.NoError(t, err)
+
+	require.Nil(t, iterator.Next())
 }

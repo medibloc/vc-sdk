@@ -1,6 +1,7 @@
 package vc
 
 import (
+	"encoding/json"
 	"fmt"
 
 	"github.com/hyperledger/aries-framework-go/pkg/doc/signature/jsonld"
@@ -62,6 +63,27 @@ func VerifyPresentation(vp []byte, pubKey []byte, pubKeyType string) error {
 		return fmt.Errorf("failed to verify presentation: %w", err)
 	}
 	return nil
+}
+
+func GetCredentials(presentation []byte) (*Iterator, error) {
+	pres, err := verifiable.ParsePresentation(presentation, verifiable.WithPresDisabledProofCheck())
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse presentation: %w", err)
+	}
+
+	credentials := pres.Credentials()
+
+	jsonCredentials := make([][]byte, 0, len(credentials))
+	for _, credential := range pres.Credentials() {
+		jsonCredential, err := json.Marshal(credential)
+		if err != nil {
+			return nil, fmt.Errorf("failed to marshal a credential to JSON: %w", err)
+		}
+
+		jsonCredentials = append(jsonCredentials, jsonCredential)
+	}
+
+	return newIterator(jsonCredentials), nil
 }
 
 type provable interface {
