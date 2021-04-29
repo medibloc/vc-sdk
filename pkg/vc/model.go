@@ -122,8 +122,12 @@ func (i *Iterator) Len() int {
 	return len(i.items)
 }
 
+func (i *Iterator) HasNext() bool {
+	return i.index < i.Len()
+}
+
 func (i *Iterator) Next() []byte {
-	if i.index >= i.Len() {
+	if !i.HasNext() {
 		return nil
 	}
 

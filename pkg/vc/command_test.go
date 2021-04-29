@@ -67,8 +67,10 @@ func TestFullScenario(t *testing.T) {
 	require.NotNil(t, iterator)
 	require.Equal(t, 1, iterator.Len())
 
+	require.True(t, iterator.HasNext())
 	err = VerifyCredential(iterator.Next(), privKey.PubKey().SerializeUncompressed(), "EcdsaSecp256k1VerificationKey2019")
 	require.NoError(t, err)
 
+	require.False(t, iterator.HasNext())
 	require.Nil(t, iterator.Next())
 }
