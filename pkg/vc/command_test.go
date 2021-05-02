@@ -37,8 +37,20 @@ func TestFullScenario(t *testing.T) {
 		SignatureType:      "EcdsaSecp256k1Signature2019",
 	})
 	require.NoError(t, err)
-
 	fmt.Println(string(vcBytes))
+
+	proofs, err := GetCredentialProofs(vcBytes)
+	require.NoError(t, err)
+	require.True(t, proofs.HasNext())
+	proof := proofs.Next()
+	require.NotNil(t, proof)
+	require.Equal(t, "did:panacea:BFbUAkxqj3cXXYdNK9FAF9UuEmm7jCT5T77rXhBCvy2K#key1", proof.VerificationMethod)
+	require.Equal(t, "EcdsaSecp256k1Signature2019", proof.Type)
+	require.Equal(t, "assertionMethod", proof.ProofPurpose)
+	require.Empty(t, proof.Domain)
+	require.Empty(t, proof.Challenge)
+	require.False(t, proofs.HasNext())
+	require.Nil(t, proofs.Next())
 
 	err = VerifyCredential(vcBytes, privKey.PubKey().SerializeUncompressed(), "EcdsaSecp256k1VerificationKey2019")
 	require.NoError(t, err)
@@ -56,8 +68,20 @@ func TestFullScenario(t *testing.T) {
 		Challenge:          "this is a challenge",
 	})
 	require.NoError(t, err)
-
 	fmt.Println(string(vpBytes))
+
+	proofs, err = GetPresentationProofs(vpBytes)
+	require.NoError(t, err)
+	require.True(t, proofs.HasNext())
+	proof = proofs.Next()
+	require.NotNil(t, proof)
+	require.Equal(t, "did:panacea:BFbUAkxqj3cXXYdNK9FAF9UuEmm7jCT5T77rXhBCvy2K#key1", proof.VerificationMethod)
+	require.Equal(t, "EcdsaSecp256k1Signature2019", proof.Type)
+	require.Equal(t, "assertionMethod", proof.ProofPurpose)
+	require.Equal(t, "https://my-domain.com", proof.Domain)
+	require.Equal(t, "this is a challenge", proof.Challenge)
+	require.False(t, proofs.HasNext())
+	require.Nil(t, proofs.Next())
 
 	err = VerifyPresentation(vpBytes, privKey.PubKey().SerializeUncompressed(), "EcdsaSecp256k1VerificationKey2019")
 	require.NoError(t, err)
@@ -65,7 +89,6 @@ func TestFullScenario(t *testing.T) {
 	iterator, err := GetCredentials(vpBytes)
 	require.NoError(t, err)
 	require.NotNil(t, iterator)
-	require.Equal(t, 1, iterator.Len())
 
 	require.True(t, iterator.HasNext())
 	err = VerifyCredential(iterator.Next(), privKey.PubKey().SerializeUncompressed(), "EcdsaSecp256k1VerificationKey2019")

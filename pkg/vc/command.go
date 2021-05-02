@@ -89,6 +89,37 @@ func GetCredentials(presentation []byte) (*Iterator, error) {
 	return newIterator(jsonCredentials), nil
 }
 
+func GetCredentialProofs(vc []byte) (*ProofIterator, error) {
+	parsed, err := verifiable.ParseCredential(vc, verifiable.WithDisabledProofCheck())
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse credential: %w", err)
+	}
+
+	return parseProofs(parsed.Proofs)
+}
+
+func GetPresentationProofs(vp []byte) (*ProofIterator, error) {
+	parsed, err := verifiable.ParsePresentation(vp, verifiable.WithPresDisabledProofCheck())
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse credential: %w", err)
+	}
+
+	return parseProofs(parsed.Proofs)
+}
+
+func parseProofs(rawProofs []verifiable.Proof) (*ProofIterator, error) {
+	proofs := make([]*Proof, 0)
+	for _, p := range rawProofs {
+		proof, err := newProof(p)
+		if err != nil {
+			return nil, fmt.Errorf("failed to newProof: %w", err)
+		}
+		proofs = append(proofs, proof)
+	}
+
+	return newProofIterator(proofs), nil
+}
+
 // provable is an interface that represent the return value of ParseCredential() and ParsePresentation() defined in the aries-framework-go.
 // This type can be passed to the AddLinkedDataProof() defined in the aries-framework-go.
 type provable interface {
@@ -116,4 +147,46 @@ func addProof(provableData provable, privKey []byte, opts *ProofOptions) error {
 		Challenge:               opts.Challenge,
 	}
 	return provableData.AddLinkedDataProof(signingCtx)
+}
+
+type Proof struct {
+	VerificationMethod string `json:"verificationMethod"`
+	Type               string `json:"type"`
+	ProofPurpose       string `json:"proofPurpose"`
+	Domain             string `json:"domain,omitempty"`
+	Challenge          string `json:"domain,omitempty"`
+}
+
+func newProof(p verifiable.Proof) (*Proof, error) {
+	proof := &Proof{}
+	var ok bool
+
+	proof.VerificationMethod, ok = stringFromMap(p, "verificationMethod")
+	if !ok {
+		return nil, fmt.Errorf("failed to find verificationMethod")
+	}
+	proof.Type, ok = stringFromMap(p, "type")
+	if !ok {
+		return nil, fmt.Errorf("failed to find type")
+	}
+	proof.ProofPurpose, ok = stringFromMap(p, "proofPurpose")
+	if !ok {
+		return nil, fmt.Errorf("failed to find proofPurpose")
+	}
+	proof.Domain, _ = stringFromMap(p, "domain")
+	proof.Challenge, _ = stringFromMap(p, "challenge")
+
+	return proof, nil
+}
+
+func stringFromMap(m map[string]interface{}, k string) (string, bool) {
+	v, ok := m[k]
+	if !ok {
+		return "", false
+	}
+
+	if v == nil {
+		return "", false
+	}
+	return v.(string), true
 }

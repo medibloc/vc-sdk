@@ -108,7 +108,7 @@ func (p *Presentation) toAriesPresentation() (*verifiable.Presentation, error) {
 	return presentation, nil
 }
 
-// Iterator is an iterator of byte slices (because gomobile doesn't support the 2-dimension slice types).
+// Iterator is an iterator of byte slices (because gomobile doesn't support slice types except 1-D []byte).
 type Iterator struct {
 	items [][]byte
 	index int
@@ -121,7 +121,7 @@ func newIterator(items [][]byte) *Iterator {
 	}
 }
 
-func (i *Iterator) Len() int {
+func (i *Iterator) len() int {
 	if i.items == nil {
 		return 0
 	}
@@ -129,10 +129,44 @@ func (i *Iterator) Len() int {
 }
 
 func (i *Iterator) HasNext() bool {
-	return i.index < i.Len()
+	return i.index < i.len()
 }
 
 func (i *Iterator) Next() []byte {
+	if !i.HasNext() {
+		return nil
+	}
+
+	ret := i.items[i.index]
+	i.index++
+	return ret
+}
+
+// ProofIterator is an iterator of byte slices (because gomobile doesn't support slice types except 1-D []byte).
+type ProofIterator struct {
+	items []*Proof
+	index int
+}
+
+func newProofIterator(items []*Proof) *ProofIterator {
+	return &ProofIterator{
+		items: items,
+		index: 0,
+	}
+}
+
+func (i *ProofIterator) len() int {
+	if i.items == nil {
+		return 0
+	}
+	return len(i.items)
+}
+
+func (i *ProofIterator) HasNext() bool {
+	return i.index < i.len()
+}
+
+func (i *ProofIterator) Next() *Proof {
 	if !i.HasNext() {
 		return nil
 	}
