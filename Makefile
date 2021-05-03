@@ -1,4 +1,4 @@
-VERSION := $(shell echo $(shell git describe --tags) | sed 's/^v//')
+VERSION := $(shell echo $(shell git describe --tags) | sed 's/^v//') || "none"
 
 export GO111MODULE = on
 
