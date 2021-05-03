@@ -2,8 +2,6 @@ VERSION := $(shell echo $(shell git describe --tags) | sed 's/^v//')
 
 export GO111MODULE = on
 
-all:
-
 build: go.sum
 	go build -mod=readonly ./...
 
