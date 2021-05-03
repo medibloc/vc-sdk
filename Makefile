@@ -1,4 +1,4 @@
-VERSION := $(shell echo $(shell git describe --tags) | sed 's/^v//') || "none"
+VERSION := $(shell echo $(shell git describe --tags --always) | sed 's/^v//')
 
 export GO111MODULE = on
 
@@ -8,10 +8,14 @@ build: go.sum
 test: build
 	go test -v ./...
 
-build-android: build
+install-gomobile:
+	go get golang.org/x/mobile/cmd/gomobile
+	gomobile init
+
+build-android: build install-gomobile
 	gomobile bind -target=android -javapkg=org.medibloc.vc_sdk -o vc-${VERSION}.aar ./...
 
-build-ios: build
+build-ios: build install-gomobile
 	gomobile bind -target=ios -o Vc-${VERSION}.framework ./...
 
 clean:
