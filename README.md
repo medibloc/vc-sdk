@@ -13,15 +13,11 @@ Verifiable Credential/Presentation SDK written in Go (+ mobile bindings)
 ## Building and Testing
 
 ```bash
-go build ./...
+make build
+make test
 
-go test ./...
-
-# For Android binding (Java)
-gomobile bind -target=android ./...
-
-# For iOS binding (Objective-C)
-gomobile bind -target=ios ./...
+make build-android
+make build-ios
 ```
 
 ## Examples
