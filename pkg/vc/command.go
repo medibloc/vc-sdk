@@ -3,6 +3,7 @@ package vc
 import (
 	"encoding/json"
 	"fmt"
+	"time"
 
 	"github.com/hyperledger/aries-framework-go/pkg/doc/signature/jsonld"
 	"github.com/hyperledger/aries-framework-go/pkg/doc/signature/suite"
@@ -130,6 +131,8 @@ type provable interface {
 type ProofOptions struct {
 	VerificationMethod string `json:"verificationMethod,omitempty"`
 	SignatureType      string `json:"signatureType,omitempty"`
+	ProofPurpose       string `json:"proofPurpose,omitempty"`
+	Created            string `json:"created,omitempty"`
 	Domain             string `json:"domain,omitempty"`
 	Challenge          string `json:"challenge,omitempty"`
 }
@@ -138,23 +141,36 @@ func addProof(provableData provable, privKey []byte, opts *ProofOptions) error {
 	// TODO: support more sig types
 	sigSuite := ecdsasecp256k1signature2019.New(suite.WithSigner(newSecp256k1Signer(privKey)))
 
+	var created *time.Time = nil
+	if opts.Created != "" {
+		ts, err := time.Parse(time.RFC3339, opts.Created)
+		if err != nil {
+			return fmt.Errorf("failed to parse 'created' time: %w", err)
+		}
+		created = &ts
+	}
+
 	signingCtx := &verifiable.LinkedDataProofContext{
 		VerificationMethod:      opts.VerificationMethod,
 		SignatureRepresentation: verifiable.SignatureProofValue,
 		SignatureType:           opts.SignatureType,
 		Suite:                   sigSuite,
+		Purpose:                 opts.ProofPurpose,
+		Created:                 created,
 		Domain:                  opts.Domain,
 		Challenge:               opts.Challenge,
 	}
 	return provableData.AddLinkedDataProof(signingCtx)
 }
 
+// Proof is a LD Proof struct: https://w3c-ccg.github.io/ld-proofs/
 type Proof struct {
 	VerificationMethod string `json:"verificationMethod"`
 	Type               string `json:"type"`
 	ProofPurpose       string `json:"proofPurpose"`
+	Created            string `json:"created"`
 	Domain             string `json:"domain,omitempty"`
-	Challenge          string `json:"domain,omitempty"`
+	Challenge          string `json:"challenge,omitempty"`
 }
 
 func newProof(p verifiable.Proof) (*Proof, error) {
@@ -172,6 +188,10 @@ func newProof(p verifiable.Proof) (*Proof, error) {
 	proof.ProofPurpose, ok = stringFromMap(p, "proofPurpose")
 	if !ok {
 		return nil, fmt.Errorf("failed to find proofPurpose")
+	}
+	proof.Created, ok = stringFromMap(p, "created")
+	if !ok {
+		return nil, fmt.Errorf("failed to find created")
 	}
 	proof.Domain, _ = stringFromMap(p, "domain")
 	proof.Challenge, _ = stringFromMap(p, "challenge")
