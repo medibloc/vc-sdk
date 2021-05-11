@@ -130,8 +130,8 @@ type provable interface {
 // ProofOptions is model to allow the dynamic proofing options by the user.
 type ProofOptions struct {
 	VerificationMethod string `json:"verificationMethod,omitempty"`
-	ProofPurpose       string `json:"proofPurpose,omitempty"`
 	SignatureType      string `json:"signatureType,omitempty"`
+	ProofPurpose       string `json:"proofPurpose,omitempty"`
 	Created            string `json:"created,omitempty"`
 	Domain             string `json:"domain,omitempty"`
 	Challenge          string `json:"challenge,omitempty"`
@@ -155,10 +155,10 @@ func addProof(provableData provable, privKey []byte, opts *ProofOptions) error {
 		SignatureRepresentation: verifiable.SignatureProofValue,
 		SignatureType:           opts.SignatureType,
 		Suite:                   sigSuite,
+		Purpose:                 opts.ProofPurpose,
+		Created:                 created,
 		Domain:                  opts.Domain,
 		Challenge:               opts.Challenge,
-		Created:                 created,
-		Purpose:                 opts.ProofPurpose,
 	}
 	return provableData.AddLinkedDataProof(signingCtx)
 }
