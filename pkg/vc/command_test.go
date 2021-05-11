@@ -49,6 +49,7 @@ func TestFullScenario(t *testing.T) {
 	require.Equal(t, "assertionMethod", proof.ProofPurpose)
 	require.Empty(t, proof.Domain)
 	require.Empty(t, proof.Challenge)
+	require.NotEmpty(t, proof.Created) // automatically set as current time by Aries
 	require.False(t, proofs.HasNext())
 	require.Nil(t, proofs.Next())
 
@@ -66,6 +67,7 @@ func TestFullScenario(t *testing.T) {
 		SignatureType:      "EcdsaSecp256k1Signature2019",
 		Domain:             "https://my-domain.com",
 		Challenge:          "this is a challenge",
+		Created:            "2017-06-18T21:19:10Z",
 	})
 	require.NoError(t, err)
 	fmt.Println(string(vpBytes))
@@ -80,6 +82,7 @@ func TestFullScenario(t *testing.T) {
 	require.Equal(t, "assertionMethod", proof.ProofPurpose)
 	require.Equal(t, "https://my-domain.com", proof.Domain)
 	require.Equal(t, "this is a challenge", proof.Challenge)
+	require.Equal(t, "2017-06-18T21:19:10Z", proof.Created)
 	require.False(t, proofs.HasNext())
 	require.Nil(t, proofs.Next())
 
