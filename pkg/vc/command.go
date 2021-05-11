@@ -163,6 +163,7 @@ func addProof(provableData provable, privKey []byte, opts *ProofOptions) error {
 	return provableData.AddLinkedDataProof(signingCtx)
 }
 
+// Proof is a LD Proof struct: https://w3c-ccg.github.io/ld-proofs/
 type Proof struct {
 	VerificationMethod string `json:"verificationMethod"`
 	Type               string `json:"type"`
@@ -188,9 +189,12 @@ func newProof(p verifiable.Proof) (*Proof, error) {
 	if !ok {
 		return nil, fmt.Errorf("failed to find proofPurpose")
 	}
+	proof.Created, ok = stringFromMap(p, "created")
+	if !ok {
+		return nil, fmt.Errorf("failed to find created")
+	}
 	proof.Domain, _ = stringFromMap(p, "domain")
 	proof.Challenge, _ = stringFromMap(p, "challenge")
-	proof.Created, _ = stringFromMap(p, "created")
 
 	return proof, nil
 }
