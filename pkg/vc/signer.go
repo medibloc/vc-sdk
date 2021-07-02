@@ -3,6 +3,8 @@ package vc
 import (
 	"crypto/sha256"
 	"fmt"
+	"github.com/hyperledger/aries-framework-go/pkg/crypto/primitive/bbs12381g2pub"
+	"strings"
 
 	"github.com/btcsuite/btcd/btcec"
 )
@@ -41,4 +43,31 @@ func getSHA256(bytes []byte) []byte {
 	hasher := sha256.New()
 	hasher.Write(bytes)
 	return hasher.Sum(nil)
+}
+
+type bbsSigner struct {
+	privKey []byte
+}
+
+func newBbsSigner(privKey []byte) *bbsSigner {
+	return &bbsSigner{privKey: privKey}
+}
+
+func (s *bbsSigner) Sign(data []byte) ([]byte, error) {
+	msgs := s.textToLines(string(data))
+
+	return bbs12381g2pub.New().Sign(msgs, s.privKey)
+}
+
+func (s *bbsSigner) textToLines(txt string) [][]byte {
+	lines := strings.Split(txt, "\n")
+	linesBytes := make([][]byte, 0, len(lines))
+
+	for i := range lines {
+		if strings.TrimSpace(lines[i]) != "" {
+			linesBytes = append(linesBytes, []byte(lines[i]))
+		}
+	}
+
+	return linesBytes
 }
