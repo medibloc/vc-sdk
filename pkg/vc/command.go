@@ -3,9 +3,12 @@ package vc
 import (
 	"encoding/json"
 	"fmt"
+	controllerverifiable "github.com/hyperledger/aries-framework-go/pkg/controller/command/verifiable"
+	"github.com/hyperledger/aries-framework-go/pkg/doc/signature/suite/bbsblssignature2020"
 	"time"
 
 	"github.com/hyperledger/aries-framework-go/pkg/doc/signature/jsonld"
+	"github.com/hyperledger/aries-framework-go/pkg/doc/signature/signer"
 	"github.com/hyperledger/aries-framework-go/pkg/doc/signature/suite"
 	"github.com/hyperledger/aries-framework-go/pkg/doc/signature/suite/ecdsasecp256k1signature2019"
 	"github.com/hyperledger/aries-framework-go/pkg/doc/verifiable"
@@ -38,8 +41,27 @@ func VerifyCredential(vc []byte, pubKey []byte, pubKeyType string) error {
 }
 
 // DeriveCredential derives a new verifiable credential using selection disclosure (to be implemented).
-func DeriveCredential(vc []byte) ([]byte, error) {
-	return nil, fmt.Errorf("not implemented")
+func DeriveCredential(vc []byte, frame []byte, nonce []byte, issuerPubKey []byte, issuerPubKeyType string) ([]byte, error) {
+	cred, err := verifiable.ParseCredential(vc, verifiable.WithDisabledProofCheck())
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse credential: %w", err)
+	}
+
+	frameMap := make(map[string]interface{})
+	if err := json.Unmarshal(frame, &frameMap); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal frame: %w", err)
+	}
+
+	derived, err := cred.GenerateBBSSelectiveDisclosure(
+		frameMap,
+		nonce,
+		verifiable.WithPublicKeyFetcher(verifiable.SingleKey(issuerPubKey, issuerPubKeyType)),
+	)
+	if err != nil {
+		return nil, fmt.Errorf("failed to generate BBS selective disclosure: %w", err)
+	}
+
+	return derived.MarshalJSON()
 }
 
 // SignPresentation creates a verifiable presentation by adding a proof to the presentation.
@@ -137,9 +159,21 @@ type ProofOptions struct {
 	Challenge          string `json:"challenge,omitempty"`
 }
 
+const (
+	EcdsaSecp256k1Signature2019 = "EcdsaSecp256k1Signature2019"
+)
+
 func addProof(provableData provable, privKey []byte, opts *ProofOptions) error {
-	// TODO: support more sig types
-	sigSuite := ecdsasecp256k1signature2019.New(suite.WithSigner(newSecp256k1Signer(privKey)))
+	var sigSuite signer.SignatureSuite
+
+	switch opts.SignatureType {
+	case EcdsaSecp256k1Signature2019:
+		sigSuite = ecdsasecp256k1signature2019.New(suite.WithSigner(newSecp256k1Signer(privKey)))
+	case controllerverifiable.BbsBlsSignature2020:
+		sigSuite = bbsblssignature2020.New(suite.WithSigner(newBbsSigner(privKey)))
+	default:
+		return fmt.Errorf("signature type unsupported: %s", opts.SignatureType)
+	}
 
 	var created *time.Time = nil
 	if opts.Created != "" {
