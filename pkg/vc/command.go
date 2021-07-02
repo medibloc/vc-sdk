@@ -159,11 +159,15 @@ type ProofOptions struct {
 	Challenge          string `json:"challenge,omitempty"`
 }
 
+const (
+	EcdsaSecp256k1Signature2019 = "EcdsaSecp256k1Signature2019"
+)
+
 func addProof(provableData provable, privKey []byte, opts *ProofOptions) error {
 	var sigSuite signer.SignatureSuite
 
 	switch opts.SignatureType {
-	case controllerverifiable.Ed25519Signature2018:
+	case EcdsaSecp256k1Signature2019:
 		sigSuite = ecdsasecp256k1signature2019.New(suite.WithSigner(newSecp256k1Signer(privKey)))
 	case controllerverifiable.BbsBlsSignature2020:
 		sigSuite = bbsblssignature2020.New(suite.WithSigner(newBbsSigner(privKey)))

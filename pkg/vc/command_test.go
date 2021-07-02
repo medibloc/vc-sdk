@@ -104,7 +104,7 @@ func TestFullScenarioWithSecp256k1(t *testing.T) {
 }
 
 // TODO: refactor tests (merging this test with the one above)
-func TestFullScenarioWithBBSBLS(t *testing.T) {
+func TestFullScenarioWithBBS(t *testing.T) {
 	bbsKeyType := "Bls12381G2Key2020"
 	bbsSigType := "BbsBlsSignature2020"
 	cred := `{"@context": ["https://www.w3.org/2018/credentials/v1","https://www.w3.org/2018/credentials/examples/v1","https://w3id.org/security/bbs/v1"],
