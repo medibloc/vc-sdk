@@ -4,15 +4,41 @@ import (
 	"crypto/sha256"
 	"encoding/base64"
 	"fmt"
+	"net/http"
 
+	"github.com/hyperledger/aries-framework-go/component/storageutil/mem"
 	"github.com/hyperledger/aries-framework-go/pkg/crypto/primitive/bbs12381g2pub"
+	"github.com/hyperledger/aries-framework-go/pkg/doc/ld"
+	"github.com/hyperledger/aries-framework-go/pkg/framework/context"
+	ldstore "github.com/hyperledger/aries-framework-go/pkg/store/ld"
 	"github.com/medibloc/vc-sdk/pkg/vc/testutil"
 
 	"testing"
 
 	"github.com/btcsuite/btcd/btcec"
+	jsonld "github.com/piprate/json-gold/ld"
 	"github.com/stretchr/testify/require"
 )
+
+type httpRemoteDocumentLoader struct{}
+
+func (l *httpRemoteDocumentLoader) LoadDocument(url string) (*jsonld.RemoteDocument, error) {
+	resp, err := http.Get(url)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	doc, err := jsonld.DocumentFromReader(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	return &jsonld.RemoteDocument{
+		DocumentURL: url,
+		Document:    doc,
+	}, nil
+}
 
 func TestFullScenarioWithSecp256k1(t *testing.T) {
 	cred := `{"@context": ["https://www.w3.org/2018/credentials/v1","https://www.w3.org/2018/credentials/examples/v1"],
@@ -37,7 +63,24 @@ func TestFullScenarioWithSecp256k1(t *testing.T) {
 	fmt.Println(base64.RawURLEncoding.EncodeToString(privKey.Serialize()))
 	fmt.Println(base64.RawURLEncoding.EncodeToString(privKey.PubKey().SerializeUncompressed()))
 
-	loader := testutil.DocumentLoader(t)
+	storeProvider := mem.NewProvider()
+	require.NoError(t, err)
+	contextStore, err := ldstore.NewContextStore(storeProvider)
+	require.NoError(t, err)
+	remoteProviderStore, err := ldstore.NewRemoteProviderStore(storeProvider)
+	require.NoError(t, err)
+
+	ctx, err := context.New(
+		context.WithJSONLDContextStore(contextStore),
+		context.WithJSONLDRemoteProviderStore(remoteProviderStore),
+	)
+	require.NoError(t, err)
+
+	loader, err := ld.NewDocumentLoader(
+		ctx,
+		ld.WithRemoteDocumentLoader(&httpRemoteDocumentLoader{}),
+	)
+	require.NoError(t, err)
 
 	vcBytes, err := SignCredential([]byte(cred), privKey.Serialize(), &ProofOptions{
 		VerificationMethod: "did:panacea:BFbUAkxqj3cXXYdNK9FAF9UuEmm7jCT5T77rXhBCvy2K#key1",
