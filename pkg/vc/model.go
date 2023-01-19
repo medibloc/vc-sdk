@@ -7,6 +7,7 @@ import (
 
 	"github.com/hyperledger/aries-framework-go/pkg/doc/util"
 	"github.com/hyperledger/aries-framework-go/pkg/doc/verifiable"
+	ld "github.com/piprate/json-gold/ld"
 )
 
 // Credential is a helper model to assemble an W3C compatible JSON document.
@@ -75,8 +76,8 @@ type Presentation struct {
 }
 
 // AddVerifiableCredential adds a raw JSON of a verifiable credential to the Presentation.
-func (p *Presentation) AddVerifiableCredential(vcBytes []byte) error {
-	vc, err := verifiable.ParseCredential(vcBytes, verifiable.WithDisabledProofCheck())
+func (p *Presentation) AddVerifiableCredential(vcBytes []byte, documentLoader ld.DocumentLoader) error {
+	vc, err := verifiable.ParseCredential(vcBytes, verifiable.WithDisabledProofCheck(), verifiable.WithJSONLDDocumentLoader(documentLoader))
 	if err != nil {
 		return fmt.Errorf("failed to parse verifiable credential: %w", err)
 	}
