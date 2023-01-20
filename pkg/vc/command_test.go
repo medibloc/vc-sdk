@@ -4,11 +4,12 @@ import (
 	"crypto/sha256"
 	"encoding/base64"
 	"fmt"
-
-	"github.com/hyperledger/aries-framework-go/pkg/crypto/primitive/bbs12381g2pub"
-	"github.com/medibloc/vc-sdk/pkg/vc/testutil"
-
 	"testing"
+
+	"github.com/hyperledger/aries-framework-go/component/storageutil/mem"
+	"github.com/hyperledger/aries-framework-go/pkg/crypto/primitive/bbs12381g2pub"
+	"github.com/hyperledger/aries-framework-go/pkg/framework/aries"
+	"github.com/medibloc/vc-sdk/pkg/vc/testutil"
 
 	"github.com/btcsuite/btcd/btcec"
 	"github.com/stretchr/testify/require"
@@ -39,6 +40,9 @@ func TestFullScenarioWithSecp256k1(t *testing.T) {
 
 	loader := testutil.DocumentLoader(t)
 
+	aries.New()
+	mem.NewProvider()
+
 	vcBytes, err := SignCredential([]byte(cred), privKey.Serialize(), &ProofOptions{
 		VerificationMethod: "did:panacea:BFbUAkxqj3cXXYdNK9FAF9UuEmm7jCT5T77rXhBCvy2K#key1",
 		SignatureType:      "EcdsaSecp256k1Signature2019",
@@ -56,7 +60,7 @@ func TestFullScenarioWithSecp256k1(t *testing.T) {
 	require.Equal(t, "assertionMethod", proof.ProofPurpose)
 	require.Empty(t, proof.Domain)
 	require.Empty(t, proof.Challenge)
-	require.NotEmpty(t, proof.Created) // automatically set as current time by Aries
+	require.NotEmpty(t, proof.Created) // automatically set as current time by PanaceaFramework
 	require.False(t, proofs.HasNext())
 	require.Nil(t, proofs.Next())
 
@@ -153,7 +157,7 @@ func TestFullScenarioWithBBS(t *testing.T) {
 	require.Equal(t, "assertionMethod", proof.ProofPurpose)
 	require.Empty(t, proof.Domain)
 	require.Empty(t, proof.Challenge)
-	require.NotEmpty(t, proof.Created) // automatically set as current time by Aries
+	require.NotEmpty(t, proof.Created) // automatically set as current time by PanaceaFramework
 	require.False(t, proofs.HasNext())
 	require.Nil(t, proofs.Next())
 

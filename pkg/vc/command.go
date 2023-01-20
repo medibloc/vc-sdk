@@ -7,6 +7,7 @@ import (
 
 	controllerverifiable "github.com/hyperledger/aries-framework-go/pkg/controller/command/verifiable"
 	"github.com/hyperledger/aries-framework-go/pkg/doc/signature/suite/bbsblssignature2020"
+	"github.com/hyperledger/aries-framework-go/spi/storage"
 	ld "github.com/piprate/json-gold/ld"
 
 	"github.com/hyperledger/aries-framework-go/pkg/doc/signature/jsonld"
@@ -16,14 +17,30 @@ import (
 	"github.com/hyperledger/aries-framework-go/pkg/doc/verifiable"
 )
 
+type provider interface {
+	StorageProvider() storage.Provider
+	JSONLDDocumentLoader() ld.DocumentLoader
+}
+type Command struct {
+	ctx            provider
+	documentLoader ld.DocumentLoader
+}
+
+func New(p provider) *Command {
+	return &Command{
+		ctx:            p,
+		documentLoader: p.JSONLDDocumentLoader(),
+	}
+}
+
 // SignCredential creates a verifiable credential by adding a proof to the credential.
-func SignCredential(credential []byte, privKey []byte, opts *ProofOptions, documentLoader ld.DocumentLoader) ([]byte, error) {
-	cred, err := verifiable.ParseCredential(credential, verifiable.WithDisabledProofCheck(), verifiable.WithJSONLDDocumentLoader(documentLoader))
+func (c *Command) SignCredential(credential []byte, privKey []byte, opts *ProofOptions) ([]byte, error) {
+	cred, err := verifiable.ParseCredential(credential, verifiable.WithDisabledProofCheck(), verifiable.WithJSONLDDocumentLoader(c.documentLoader))
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse credential: %w", err)
 	}
 
-	if err := addProof(cred, privKey, opts, documentLoader); err != nil {
+	if err := addProof(cred, privKey, opts, c.documentLoader); err != nil {
 		return nil, fmt.Errorf("failed to add proof to credential: %w", err)
 	}
 
