@@ -6,12 +6,8 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/hyperledger/aries-framework-go/component/storageutil/mem"
-	"github.com/hyperledger/aries-framework-go/pkg/crypto/primitive/bbs12381g2pub"
-	"github.com/hyperledger/aries-framework-go/pkg/framework/aries"
-	"github.com/medibloc/vc-sdk/pkg/vc/testutil"
-
 	"github.com/btcsuite/btcd/btcec"
+	"github.com/hyperledger/aries-framework-go/pkg/crypto/primitive/bbs12381g2pub"
 	"github.com/stretchr/testify/require"
 )
 
@@ -38,19 +34,14 @@ func TestFullScenarioWithSecp256k1(t *testing.T) {
 	fmt.Println(base64.RawURLEncoding.EncodeToString(privKey.Serialize()))
 	fmt.Println(base64.RawURLEncoding.EncodeToString(privKey.PubKey().SerializeUncompressed()))
 
-	loader := testutil.DocumentLoader(t)
-
-	aries.New()
-	mem.NewProvider()
-
 	vcBytes, err := SignCredential([]byte(cred), privKey.Serialize(), &ProofOptions{
 		VerificationMethod: "did:panacea:BFbUAkxqj3cXXYdNK9FAF9UuEmm7jCT5T77rXhBCvy2K#key1",
 		SignatureType:      "EcdsaSecp256k1Signature2019",
-	}, loader)
+	})
 	require.NoError(t, err)
 	fmt.Println(string(vcBytes))
 
-	proofs, err := GetCredentialProofs(vcBytes, loader)
+	proofs, err := GetCredentialProofs(vcBytes)
 	require.NoError(t, err)
 	require.True(t, proofs.HasNext())
 	proof := proofs.Next()
@@ -64,7 +55,7 @@ func TestFullScenarioWithSecp256k1(t *testing.T) {
 	require.False(t, proofs.HasNext())
 	require.Nil(t, proofs.Next())
 
-	err = VerifyCredential(vcBytes, privKey.PubKey().SerializeUncompressed(), "EcdsaSecp256k1VerificationKey2019", loader)
+	err = VerifyCredential(vcBytes, privKey.PubKey().SerializeUncompressed(), "EcdsaSecp256k1VerificationKey2019")
 	require.NoError(t, err)
 
 	pres := fmt.Sprintf(`{"@context": ["https://www.w3.org/2018/credentials/v1"],
@@ -79,11 +70,11 @@ func TestFullScenarioWithSecp256k1(t *testing.T) {
 		Domain:             "https://my-domain.com",
 		Challenge:          "this is a challenge",
 		Created:            "2017-06-18T21:19:10Z",
-	}, loader)
+	})
 	require.NoError(t, err)
 	fmt.Println(string(vpBytes))
 
-	proofs, err = GetPresentationProofs(vpBytes, loader)
+	proofs, err = GetPresentationProofs(vpBytes)
 	require.NoError(t, err)
 	require.True(t, proofs.HasNext())
 	proof = proofs.Next()
@@ -97,15 +88,15 @@ func TestFullScenarioWithSecp256k1(t *testing.T) {
 	require.False(t, proofs.HasNext())
 	require.Nil(t, proofs.Next())
 
-	err = VerifyPresentation(vpBytes, privKey.PubKey().SerializeUncompressed(), "EcdsaSecp256k1VerificationKey2019", loader)
+	err = VerifyPresentation(vpBytes, privKey.PubKey().SerializeUncompressed(), "EcdsaSecp256k1VerificationKey2019")
 	require.NoError(t, err)
 
-	iterator, err := GetCredentials(vpBytes, loader)
+	iterator, err := GetCredentials(vpBytes)
 	require.NoError(t, err)
 	require.NotNil(t, iterator)
 
 	require.True(t, iterator.HasNext())
-	err = VerifyCredential(iterator.Next(), privKey.PubKey().SerializeUncompressed(), "EcdsaSecp256k1VerificationKey2019", loader)
+	err = VerifyCredential(iterator.Next(), privKey.PubKey().SerializeUncompressed(), "EcdsaSecp256k1VerificationKey2019")
 	require.NoError(t, err)
 
 	require.False(t, iterator.HasNext())
@@ -138,16 +129,14 @@ func TestFullScenarioWithBBS(t *testing.T) {
 	privKeyBz, err := privKey.Marshal()
 	require.NoError(t, err)
 
-	loader := testutil.DocumentLoader(t)
-
 	vcBytes, err := SignCredential([]byte(cred), privKeyBz, &ProofOptions{
 		VerificationMethod: "did:panacea:BFbUAkxqj3cXXYdNK9FAF9UuEmm7jCT5T77rXhBCvy2K#key1",
 		SignatureType:      bbsSigType,
-	}, loader)
+	})
 	require.NoError(t, err)
 	fmt.Println(string(vcBytes))
 
-	proofs, err := GetCredentialProofs(vcBytes, loader)
+	proofs, err := GetCredentialProofs(vcBytes)
 	require.NoError(t, err)
 	require.True(t, proofs.HasNext())
 	proof := proofs.Next()
@@ -163,7 +152,7 @@ func TestFullScenarioWithBBS(t *testing.T) {
 
 	pubKeyBz, err := pubKey.Marshal()
 	require.NoError(t, err)
-	err = VerifyCredential(vcBytes, pubKeyBz, bbsKeyType, loader)
+	err = VerifyCredential(vcBytes, pubKeyBz, bbsKeyType)
 	require.NoError(t, err)
 
 	frame := []byte(`{"@context": ["https://www.w3.org/2018/credentials/v1","https://www.w3.org/2018/credentials/examples/v1","https://w3id.org/security/bbs/v1"],
@@ -180,7 +169,7 @@ func TestFullScenarioWithBBS(t *testing.T) {
       "UniversityDegreeCredential"
     ]}`)
 	nonce := []byte("hola")
-	vcBytes, err = DeriveCredential(vcBytes, frame, nonce, pubKeyBz, bbsKeyType, loader)
+	vcBytes, err = DeriveCredential(vcBytes, frame, nonce, pubKeyBz, bbsKeyType)
 	require.NoError(t, err)
 
 	pres := fmt.Sprintf(`{"@context": ["https://www.w3.org/2018/credentials/v1","https://w3id.org/security/bbs/v1"],
@@ -195,11 +184,11 @@ func TestFullScenarioWithBBS(t *testing.T) {
 		Domain:             "https://my-domain.com",
 		Challenge:          "this is a challenge",
 		Created:            "2017-06-18T21:19:10Z",
-	}, loader)
+	})
 	require.NoError(t, err)
 	fmt.Println(string(vpBytes))
 
-	proofs, err = GetPresentationProofs(vpBytes, loader)
+	proofs, err = GetPresentationProofs(vpBytes)
 	require.NoError(t, err)
 	require.True(t, proofs.HasNext())
 	proof = proofs.Next()
@@ -213,15 +202,15 @@ func TestFullScenarioWithBBS(t *testing.T) {
 	require.False(t, proofs.HasNext())
 	require.Nil(t, proofs.Next())
 
-	err = VerifyPresentation(vpBytes, pubKeyBz, bbsKeyType, loader)
+	err = VerifyPresentation(vpBytes, pubKeyBz, bbsKeyType)
 	require.NoError(t, err)
 
-	iterator, err := GetCredentials(vpBytes, loader)
+	iterator, err := GetCredentials(vpBytes)
 	require.NoError(t, err)
 	require.NotNil(t, iterator)
 
 	require.True(t, iterator.HasNext())
-	err = VerifyCredential(iterator.Next(), pubKeyBz, bbsKeyType, loader)
+	err = VerifyCredential(iterator.Next(), pubKeyBz, bbsKeyType)
 	require.NoError(t, err)
 
 	require.False(t, iterator.HasNext())
