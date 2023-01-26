@@ -9,6 +9,19 @@ Verifiable Credential/Presentation SDK written in Go (+ mobile bindings)
 - Signing Presentations
 - Verifying Presentations
 
+[//]: # (## Usage)
+
+[//]: # ()
+[//]: # (```go)
+
+[//]: # (f := vc.NewFramework&#40;&#41;)
+
+[//]: # ()
+[//]: # ()
+[//]: # (f.SignCredential&#40;...&#41;)
+
+[//]: # (```)
+
 
 ## Building and Testing
 

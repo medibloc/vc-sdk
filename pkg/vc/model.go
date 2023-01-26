@@ -56,7 +56,7 @@ func (c *Credential) toAriesCredential() (*verifiable.Credential, error) {
 	}, nil
 }
 
-func toAriesTime(str string) (*util.TimeWithTrailingZeroMsec, error) {
+func toAriesTime(str string) (*util.TimeWrapper, error) {
 	if str == "" {
 		return nil, nil
 	}
