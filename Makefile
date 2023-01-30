@@ -9,7 +9,7 @@ test: build
 	go test -v ./...
 
 install-gomobile:
-	go install golang.org/x/mobile/cmd/gomobile
+	go install golang.org/x/mobile/cmd/gomobile@latest
 	gomobile init
 
 build-android: build install-gomobile
