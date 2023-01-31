@@ -10,11 +10,11 @@ import (
 	jsonld "github.com/piprate/json-gold/ld"
 )
 
-type FrameWork struct {
+type Framework struct {
 	loader *ld.DocumentLoader
 }
 
-func NewFrameWork() (*FrameWork, error) {
+func NewFramework() (*Framework, error) {
 	storeProvider := mem.NewProvider()
 	contextStore, err := ldstore.NewContextStore(storeProvider)
 	if err != nil {
@@ -42,7 +42,7 @@ func NewFrameWork() (*FrameWork, error) {
 		return nil, err
 	}
 
-	return &FrameWork{
+	return &Framework{
 		loader: loader,
 	}, nil
 }
