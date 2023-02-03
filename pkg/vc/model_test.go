@@ -30,11 +30,13 @@ func TestCredentialAndPresentation(t *testing.T) {
 }
 
 func TestPresentation(t *testing.T) {
+	framework, err := NewFramework()
+	require.NoError(t, err)
 	presentation := &Presentation{
 		ID:     "https://abc.com/vp/1",
 		Holder: "did:panacea:FAF9UuEmm7jCT5T77rXhBCvy2KBFbUAkxqj3cXXYdNK9",
 	}
-	err := presentation.AddVerifiableCredential([]byte(`{"@context":["https://www.w3.org/2018/credentials/v1","https://www.w3.org/2018/credentials/examples/v1"],"credentialSubject":{"degree":{"name":"Bachelor of Science and Arts","type":"BachelorDegree"},"id":"did:example:ebfeb1f712ebc6f1c276e12ec21"},"expirationDate":"2030-01-01T19:13:24Z","id":"https://abc.com/vc/1","issuanceDate":"2010-01-01T19:13:24Z","issuer":"did:panacea:BFbUAkxqj3cXXYdNK9FAF9UuEmm7jCT5T77rXhBCvy2K","type":["VerifiableCredential","UniversityDegreeCredential"]}`))
+	err = presentation.AddVerifiableCredential([]byte(`{"@context":["https://www.w3.org/2018/credentials/v1","https://www.w3.org/2018/credentials/examples/v1"],"credentialSubject":{"degree":{"name":"Bachelor of Science and Arts","type":"BachelorDegree"},"id":"did:example:ebfeb1f712ebc6f1c276e12ec21"},"expirationDate":"2030-01-01T19:13:24Z","id":"https://abc.com/vc/1","issuanceDate":"2010-01-01T19:13:24Z","issuer":"did:panacea:BFbUAkxqj3cXXYdNK9FAF9UuEmm7jCT5T77rXhBCvy2K","type":["VerifiableCredential","UniversityDegreeCredential"]}`), framework.loader)
 	require.NoError(t, err)
 
 	presentationJSON, err := presentation.MarshalJSON()

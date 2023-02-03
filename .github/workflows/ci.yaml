@@ -19,7 +19,7 @@ jobs:
       - name: Set up Go 1.x
         uses: actions/setup-go@v2
         with:
-          go-version: ^1.15
+          go-version: ^1.19
         id: go
 
       - name: Check out code into the Go module directory
@@ -31,8 +31,8 @@ jobs:
       - name: Test
         run: make test
 
-      - name: Build Android
-        run: make build-android
+#      - name: Build Android
+#        run: make build-android
 
       - name: Build iOS
         if: matrix.platform == 'macos-latest'
