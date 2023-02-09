@@ -8,6 +8,7 @@ require (
 	github.com/hyperledger/aries-framework-go/component/storageutil v0.0.0-20220322085443-50e8f9bd208b
 	github.com/piprate/json-gold v0.4.1-0.20210813112359-33b90c4ca86c
 	github.com/stretchr/testify v1.7.0
+	golang.org/x/mobile v0.0.0-20221110043201-43a038452099 // indirect
 )
 
 require github.com/google/uuid v1.1.2
