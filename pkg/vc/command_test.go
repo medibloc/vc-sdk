@@ -28,7 +28,7 @@ func TestFullScenarioWithSecp256k1(t *testing.T) {
       "UniversityDegreeCredential"
     ]}`
 
-	frameWork, err := NewFramework()
+	f, err := NewFramework()
 	require.NoError(t, err)
 
 	privKey, err := btcec.NewPrivateKey(btcec.S256())
@@ -37,14 +37,14 @@ func TestFullScenarioWithSecp256k1(t *testing.T) {
 	fmt.Println(base64.RawURLEncoding.EncodeToString(privKey.Serialize()))
 	fmt.Println(base64.RawURLEncoding.EncodeToString(privKey.PubKey().SerializeUncompressed()))
 
-	vcBytes, err := frameWork.SignCredential([]byte(cred), privKey.Serialize(), &ProofOptions{
+	vcBytes, err := f.SignCredential([]byte(cred), privKey.Serialize(), &ProofOptions{
 		VerificationMethod: "did:panacea:BFbUAkxqj3cXXYdNK9FAF9UuEmm7jCT5T77rXhBCvy2K#key1",
 		SignatureType:      "EcdsaSecp256k1Signature2019",
 	})
 	require.NoError(t, err)
 	fmt.Println(string(vcBytes))
 
-	proofs, err := frameWork.GetCredentialProofs(vcBytes)
+	proofs, err := f.GetCredentialProofs(vcBytes)
 	require.NoError(t, err)
 	require.True(t, proofs.HasNext())
 	proof := proofs.Next()
@@ -58,7 +58,7 @@ func TestFullScenarioWithSecp256k1(t *testing.T) {
 	require.False(t, proofs.HasNext())
 	require.Nil(t, proofs.Next())
 
-	err = frameWork.VerifyCredential(vcBytes, privKey.PubKey().SerializeUncompressed(), "EcdsaSecp256k1VerificationKey2019")
+	err = f.VerifyCredential(vcBytes, privKey.PubKey().SerializeUncompressed(), "EcdsaSecp256k1VerificationKey2019")
 	require.NoError(t, err)
 
 	pres := fmt.Sprintf(`{"@context": ["https://www.w3.org/2018/credentials/v1"],
@@ -67,7 +67,7 @@ func TestFullScenarioWithSecp256k1(t *testing.T) {
 		"verifiableCredential": [%s]
 	}`, string(vcBytes))
 
-	vpBytes, err := frameWork.SignPresentation([]byte(pres), privKey.Serialize(), &ProofOptions{
+	vpBytes, err := f.SignPresentation([]byte(pres), privKey.Serialize(), &ProofOptions{
 		VerificationMethod: "did:panacea:BFbUAkxqj3cXXYdNK9FAF9UuEmm7jCT5T77rXhBCvy2K#key1",
 		SignatureType:      "EcdsaSecp256k1Signature2019",
 		Domain:             "https://my-domain.com",
@@ -77,7 +77,7 @@ func TestFullScenarioWithSecp256k1(t *testing.T) {
 	require.NoError(t, err)
 	fmt.Println(string(vpBytes))
 
-	proofs, err = frameWork.GetPresentationProofs(vpBytes)
+	proofs, err = f.GetPresentationProofs(vpBytes)
 	require.NoError(t, err)
 	require.True(t, proofs.HasNext())
 	proof = proofs.Next()
@@ -91,15 +91,15 @@ func TestFullScenarioWithSecp256k1(t *testing.T) {
 	require.False(t, proofs.HasNext())
 	require.Nil(t, proofs.Next())
 
-	err = frameWork.VerifyPresentation(vpBytes, privKey.PubKey().SerializeUncompressed(), "EcdsaSecp256k1VerificationKey2019", nil)
+	err = f.VerifyPresentation(vpBytes, privKey.PubKey().SerializeUncompressed(), "EcdsaSecp256k1VerificationKey2019", nil)
 	require.NoError(t, err)
 
-	iterator, err := frameWork.GetCredentials(vpBytes)
+	iterator, err := f.GetCredentials(vpBytes)
 	require.NoError(t, err)
 	require.NotNil(t, iterator)
 
 	require.True(t, iterator.HasNext())
-	err = frameWork.VerifyCredential(iterator.Next(), privKey.PubKey().SerializeUncompressed(), "EcdsaSecp256k1VerificationKey2019")
+	err = f.VerifyCredential(iterator.Next(), privKey.PubKey().SerializeUncompressed(), "EcdsaSecp256k1VerificationKey2019")
 	require.NoError(t, err)
 
 	require.False(t, iterator.HasNext())
@@ -126,7 +126,7 @@ func TestFullScenarioWithBBS(t *testing.T) {
       "UniversityDegreeCredential"
     ]}`
 
-	frameWork, err := NewFramework()
+	f, err := NewFramework()
 	require.NoError(t, err)
 
 	pubKey, privKey, err := bbs12381g2pub.GenerateKeyPair(sha256.New, nil)
@@ -135,14 +135,14 @@ func TestFullScenarioWithBBS(t *testing.T) {
 	privKeyBz, err := privKey.Marshal()
 	require.NoError(t, err)
 
-	vcBytes, err := frameWork.SignCredential([]byte(cred), privKeyBz, &ProofOptions{
+	vcBytes, err := f.SignCredential([]byte(cred), privKeyBz, &ProofOptions{
 		VerificationMethod: "did:panacea:BFbUAkxqj3cXXYdNK9FAF9UuEmm7jCT5T77rXhBCvy2K#key1",
 		SignatureType:      bbsSigType,
 	})
 	require.NoError(t, err)
 	fmt.Println(string(vcBytes))
 
-	proofs, err := frameWork.GetCredentialProofs(vcBytes)
+	proofs, err := f.GetCredentialProofs(vcBytes)
 	require.NoError(t, err)
 	require.True(t, proofs.HasNext())
 	proof := proofs.Next()
@@ -158,7 +158,7 @@ func TestFullScenarioWithBBS(t *testing.T) {
 
 	pubKeyBz, err := pubKey.Marshal()
 	require.NoError(t, err)
-	err = frameWork.VerifyCredential(vcBytes, pubKeyBz, bbsKeyType)
+	err = f.VerifyCredential(vcBytes, pubKeyBz, bbsKeyType)
 	require.NoError(t, err)
 
 	frame := []byte(`{"@context": ["https://www.w3.org/2018/credentials/v1","https://www.w3.org/2018/credentials/examples/v1","https://w3id.org/security/bbs/v1"],
@@ -175,7 +175,7 @@ func TestFullScenarioWithBBS(t *testing.T) {
       "UniversityDegreeCredential"
     ]}`)
 	nonce := []byte("hola")
-	vcBytes, err = frameWork.DeriveCredential(vcBytes, frame, nonce, pubKeyBz, bbsKeyType)
+	vcBytes, err = f.DeriveCredential(vcBytes, frame, nonce, pubKeyBz, bbsKeyType)
 	require.NoError(t, err)
 
 	pres := fmt.Sprintf(`{"@context": ["https://www.w3.org/2018/credentials/v1","https://w3id.org/security/bbs/v1"],
@@ -184,7 +184,7 @@ func TestFullScenarioWithBBS(t *testing.T) {
 		"verifiableCredential": [%s]
 	}`, string(vcBytes))
 
-	vpBytes, err := frameWork.SignPresentation([]byte(pres), privKeyBz, &ProofOptions{
+	vpBytes, err := f.SignPresentation([]byte(pres), privKeyBz, &ProofOptions{
 		VerificationMethod: "did:panacea:BFbUAkxqj3cXXYdNK9FAF9UuEmm7jCT5T77rXhBCvy2K#key1",
 		SignatureType:      bbsSigType,
 		Domain:             "https://my-domain.com",
@@ -194,7 +194,7 @@ func TestFullScenarioWithBBS(t *testing.T) {
 	require.NoError(t, err)
 	fmt.Println(string(vpBytes))
 
-	proofs, err = frameWork.GetPresentationProofs(vpBytes)
+	proofs, err = f.GetPresentationProofs(vpBytes)
 	require.NoError(t, err)
 	require.True(t, proofs.HasNext())
 	proof = proofs.Next()
@@ -208,15 +208,15 @@ func TestFullScenarioWithBBS(t *testing.T) {
 	require.False(t, proofs.HasNext())
 	require.Nil(t, proofs.Next())
 
-	err = frameWork.VerifyPresentation(vpBytes, pubKeyBz, bbsKeyType, nil)
+	err = f.VerifyPresentation(vpBytes, pubKeyBz, bbsKeyType, nil)
 	require.NoError(t, err)
 
-	iterator, err := frameWork.GetCredentials(vpBytes)
+	iterator, err := f.GetCredentials(vpBytes)
 	require.NoError(t, err)
 	require.NotNil(t, iterator)
 
 	require.True(t, iterator.HasNext())
-	err = frameWork.VerifyCredential(iterator.Next(), pubKeyBz, bbsKeyType)
+	err = f.VerifyCredential(iterator.Next(), pubKeyBz, bbsKeyType)
 	require.NoError(t, err)
 
 	require.False(t, iterator.HasNext())

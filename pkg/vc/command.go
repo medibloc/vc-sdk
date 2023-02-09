@@ -5,12 +5,9 @@ import (
 	"fmt"
 	"time"
 
-	controllerverifiable "github.com/hyperledger/aries-framework-go/pkg/controller/command/verifiable"
 	"github.com/hyperledger/aries-framework-go/pkg/doc/presexch"
-	"time"
 
 	controllerverifiable "github.com/hyperledger/aries-framework-go/pkg/controller/command/verifiable"
-	"github.com/hyperledger/aries-framework-go/pkg/doc/ld"
 	"github.com/hyperledger/aries-framework-go/pkg/doc/signature/jsonld"
 	"github.com/hyperledger/aries-framework-go/pkg/doc/signature/signer"
 	"github.com/hyperledger/aries-framework-go/pkg/doc/signature/suite"

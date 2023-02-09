@@ -28,8 +28,8 @@ var (
 	pd              []byte
 	pdWithPredicate []byte
 
-	framework *FrameWork
-	loader    *ld.DocumentLoader
+	f      *Framework
+	loader *ld.DocumentLoader
 )
 
 const (
@@ -39,14 +39,14 @@ const (
 )
 
 func TestPresentationExchange_BBSProof(t *testing.T) {
-	vp, err := framework.CreatePresentationFromPD(vc, pd)
+	vp, err := f.CreatePresentationFromPD(vc, pd)
 	require.NoError(t, err)
 
 	vp.Context = append(vp.Context, "https://w3id.org/security/bbs/v1")
 
 	vpBytes, err := json.MarshalIndent(vp, "", "\t")
 
-	signedVP, err := framework.SignPresentation(vpBytes, bbsPrivKeyBz, &ProofOptions{
+	signedVP, err := f.SignPresentation(vpBytes, bbsPrivKeyBz, &ProofOptions{
 		VerificationMethod: verificationMethod,
 		SignatureType:      bbsSigType,
 		Domain:             "https://my-domain.com",
@@ -62,7 +62,7 @@ func TestPresentationExchange_BBSProof(t *testing.T) {
 	//require.NoError(t, err)
 	//fmt.Println(string(res))
 
-	proofs, err := framework.GetPresentationProofs(signedVP)
+	proofs, err := f.GetPresentationProofs(signedVP)
 	require.NoError(t, err)
 	require.True(t, proofs.HasNext())
 
@@ -77,23 +77,23 @@ func TestPresentationExchange_BBSProof(t *testing.T) {
 	require.False(t, proofs.HasNext())
 	require.Nil(t, proofs.Next())
 
-	err = framework.VerifyPresentation(signedVP, bbsPubKeyBz, bbsKeyType, pd)
+	err = f.VerifyPresentation(signedVP, bbsPubKeyBz, bbsKeyType, pd)
 	require.NoError(t, err)
 }
 
 func TestPresentationExchange_TamperedVP(t *testing.T) {
-	vpFake, err := framework.CreatePresentationFromPD(vc, pdWithPredicate)
+	vpFake, err := f.CreatePresentationFromPD(vc, pdWithPredicate)
 	require.NoError(t, err)
 	vpFake.Context = append(vpFake.Context, "https://w3id.org/security/bbs/v1")
 
-	vp, err := framework.CreatePresentationFromPD(vc, pd)
+	vp, err := f.CreatePresentationFromPD(vc, pd)
 	require.NoError(t, err)
 
 	vp.Context = append(vp.Context, "https://w3id.org/security/bbs/v1")
 
 	vpBytes, err := json.MarshalIndent(vp, "", "\t")
 
-	signedVP, err := framework.SignPresentation(vpBytes, bbsPrivKeyBz, &ProofOptions{
+	signedVP, err := f.SignPresentation(vpBytes, bbsPrivKeyBz, &ProofOptions{
 		VerificationMethod: verificationMethod,
 		SignatureType:      bbsSigType,
 		Domain:             "https://my-domain.com",
@@ -106,7 +106,7 @@ func TestPresentationExchange_TamperedVP(t *testing.T) {
 	_, err = json.MarshalIndent(parsedVP, "", "\t")
 	require.NoError(t, err)
 
-	proofs, err := framework.GetPresentationProofs(signedVP)
+	proofs, err := f.GetPresentationProofs(signedVP)
 	require.NoError(t, err)
 	require.True(t, proofs.HasNext())
 
@@ -114,7 +114,7 @@ func TestPresentationExchange_TamperedVP(t *testing.T) {
 
 	marshaledFakeVP, err := vpFake.MarshalJSON()
 	require.NoError(t, err)
-	err = framework.VerifyPresentation(marshaledFakeVP, bbsPubKeyBz, bbsKeyType, nil)
+	err = f.VerifyPresentation(marshaledFakeVP, bbsPubKeyBz, bbsKeyType, nil)
 	require.Error(t, err, "invalid BLS12-381 signature")
 }
 
@@ -144,14 +144,14 @@ func TestPresentationExchange_InvalidPresentationDefinitionID(t *testing.T) {
 	anotherPDBz, err := json.Marshal(anotherPD)
 	require.NoError(t, err)
 
-	vp, err := framework.CreatePresentationFromPD(vc, pd)
+	vp, err := f.CreatePresentationFromPD(vc, pd)
 	require.NoError(t, err)
 
 	vp.Context = append(vp.Context, "https://w3id.org/security/bbs/v1")
 
 	vpBytes, err := json.MarshalIndent(vp, "", "\t")
 
-	signedVP, err := framework.SignPresentation(vpBytes, bbsPrivKeyBz, &ProofOptions{
+	signedVP, err := f.SignPresentation(vpBytes, bbsPrivKeyBz, &ProofOptions{
 		VerificationMethod: verificationMethod,
 		SignatureType:      bbsSigType,
 		Domain:             "https://my-domain.com",
@@ -160,7 +160,7 @@ func TestPresentationExchange_InvalidPresentationDefinitionID(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	err = framework.VerifyPresentation(signedVP, bbsPubKeyBz, bbsKeyType, anotherPDBz)
+	err = f.VerifyPresentation(signedVP, bbsPubKeyBz, bbsKeyType, anotherPDBz)
 	require.Error(t, err, "is not matched with presentation definition")
 }
 
@@ -187,14 +187,14 @@ func TestPresentationExchange_InvalidPresentationDefinitionSchema(t *testing.T) 
 	anotherPDBz, err := json.Marshal(anotherPD)
 	require.NoError(t, err)
 
-	vp, err := framework.CreatePresentationFromPD(vc, pd)
+	vp, err := f.CreatePresentationFromPD(vc, pd)
 	require.NoError(t, err)
 
 	vp.Context = append(vp.Context, "https://w3id.org/security/bbs/v1")
 
 	vpBytes, err := json.MarshalIndent(vp, "", "\t")
 
-	signedVP, err := framework.SignPresentation(vpBytes, bbsPrivKeyBz, &ProofOptions{
+	signedVP, err := f.SignPresentation(vpBytes, bbsPrivKeyBz, &ProofOptions{
 		VerificationMethod: verificationMethod,
 		SignatureType:      bbsSigType,
 		Domain:             "https://my-domain.com",
@@ -203,13 +203,13 @@ func TestPresentationExchange_InvalidPresentationDefinitionSchema(t *testing.T) 
 	})
 	require.NoError(t, err)
 
-	err = framework.VerifyPresentation(signedVP, bbsPubKeyBz, bbsKeyType, anotherPDBz)
+	err = f.VerifyPresentation(signedVP, bbsPubKeyBz, bbsKeyType, anotherPDBz)
 	require.Error(t, err, "is not matched with presentation definition")
 }
 
 func init() {
-	framework, _ = NewFrameWork()
-	loader = framework.loader
+	f, _ = NewFramework()
+	loader = f.loader
 
 	pubKey, privKey, err := bbs12381g2pub.GenerateKeyPair(sha256.New, nil)
 	if err != nil {
