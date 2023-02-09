@@ -30,7 +30,7 @@ func TestCredentialAndPresentation(t *testing.T) {
 }
 
 func TestPresentation(t *testing.T) {
-	framework, err := NewFrameWork()
+	framework, err := NewFramework()
 	require.NoError(t, err)
 	presentation := &Presentation{
 		ID:     "https://abc.com/vp/1",

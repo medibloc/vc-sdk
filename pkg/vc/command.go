@@ -3,6 +3,9 @@ package vc
 import (
 	"encoding/json"
 	"fmt"
+	"time"
+
+	controllerverifiable "github.com/hyperledger/aries-framework-go/pkg/controller/command/verifiable"
 	"github.com/hyperledger/aries-framework-go/pkg/doc/presexch"
 	"time"
 
@@ -17,7 +20,7 @@ import (
 )
 
 // SignCredential creates a verifiable credential by adding a proof to the credential.
-func (f *FrameWork) SignCredential(credential []byte, privKey []byte, opts *ProofOptions) ([]byte, error) {
+func (f *Framework) SignCredential(credential []byte, privKey []byte, opts *ProofOptions) ([]byte, error) {
 	cred, err := verifiable.ParseCredential(
 		credential, verifiable.WithDisabledProofCheck(), verifiable.WithJSONLDDocumentLoader(f.loader))
 
@@ -25,7 +28,7 @@ func (f *FrameWork) SignCredential(credential []byte, privKey []byte, opts *Proo
 		return nil, fmt.Errorf("failed to parse credential: %w", err)
 	}
 
-	if err := addProof(cred, privKey, opts, f.loader); err != nil {
+	if err := f.addProof(cred, privKey, opts); err != nil {
 		return nil, fmt.Errorf("failed to add proof to credential: %w", err)
 	}
 
@@ -33,7 +36,7 @@ func (f *FrameWork) SignCredential(credential []byte, privKey []byte, opts *Proo
 }
 
 // VerifyCredential verifies a proof in the verifiable credential.
-func (f *FrameWork) VerifyCredential(vc []byte, pubKey []byte, pubKeyType string) error {
+func (f *Framework) VerifyCredential(vc []byte, pubKey []byte, pubKeyType string) error {
 	_, err := verifiable.ParseCredential(
 		vc,
 		verifiable.WithPublicKeyFetcher(verifiable.SingleKey(pubKey, pubKeyType)),
@@ -46,7 +49,7 @@ func (f *FrameWork) VerifyCredential(vc []byte, pubKey []byte, pubKeyType string
 }
 
 // DeriveCredential derives a new verifiable credential using selection disclosure (to be implemented).
-func (f *FrameWork) DeriveCredential(vc []byte, frame []byte, nonce []byte, issuerPubKey []byte, issuerPubKeyType string) ([]byte, error) {
+func (f *Framework) DeriveCredential(vc []byte, frame []byte, nonce []byte, issuerPubKey []byte, issuerPubKeyType string) ([]byte, error) {
 	cred, err := verifiable.ParseCredential(vc, verifiable.WithDisabledProofCheck(), verifiable.WithJSONLDDocumentLoader(f.loader))
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse credential: %w", err)
@@ -71,7 +74,7 @@ func (f *FrameWork) DeriveCredential(vc []byte, frame []byte, nonce []byte, issu
 }
 
 // CreatePresentationFromPD creates verifiable presentation based on presentation definition.
-func (f *FrameWork) CreatePresentationFromPD(credential []byte, pdBz []byte) (*verifiable.Presentation, error) {
+func (f *Framework) CreatePresentationFromPD(credential []byte, pdBz []byte) (*verifiable.Presentation, error) {
 	cred, err := verifiable.ParseCredential(
 		credential, verifiable.WithDisabledProofCheck(), verifiable.WithJSONLDDocumentLoader(f.loader))
 	if err != nil {
@@ -87,13 +90,13 @@ func (f *FrameWork) CreatePresentationFromPD(credential []byte, pdBz []byte) (*v
 }
 
 // SignPresentation creates a verifiable presentation by adding a proof to the presentation.
-func (f *FrameWork) SignPresentation(presentation []byte, privKey []byte, opts *ProofOptions) ([]byte, error) {
+func (f *Framework) SignPresentation(presentation []byte, privKey []byte, opts *ProofOptions) ([]byte, error) {
 	pres, err := verifiable.ParsePresentation(presentation, verifiable.WithPresDisabledProofCheck(), verifiable.WithPresJSONLDDocumentLoader(f.loader))
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse presentation: %w", err)
 	}
 
-	if err := addProof(pres, privKey, opts, f.loader); err != nil {
+	if err := f.addProof(pres, privKey, opts); err != nil {
 		return nil, fmt.Errorf("failed to add proof to presentation: %w", err)
 	}
 
@@ -102,7 +105,7 @@ func (f *FrameWork) SignPresentation(presentation []byte, privKey []byte, opts *
 
 // VerifyPresentation verifies a proof in the verifiable presentation.
 // If there is a presentation definition, also verifies that the presentation meets the requirements.
-func (f *FrameWork) VerifyPresentation(vp []byte, pubKey []byte, pubKeyType string, pdBz []byte) error {
+func (f *Framework) VerifyPresentation(vp []byte, pubKey []byte, pubKeyType string, pdBz []byte) error {
 	presentation, err := verifiable.ParsePresentation(
 		vp,
 		verifiable.WithPresPublicKeyFetcher(verifiable.SingleKey(pubKey, pubKeyType)),
@@ -130,7 +133,7 @@ func (f *FrameWork) VerifyPresentation(vp []byte, pubKey []byte, pubKeyType stri
 }
 
 // GetCredentials returns a Iterator that contains verifiable credentials in the verifiable presentation.
-func (f *FrameWork) GetCredentials(presentation []byte) (*Iterator, error) {
+func (f *Framework) GetCredentials(presentation []byte) (*Iterator, error) {
 	pres, err := verifiable.ParsePresentation(presentation, verifiable.WithPresDisabledProofCheck(), verifiable.WithPresJSONLDDocumentLoader(f.loader))
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse presentation: %w", err)
@@ -151,7 +154,7 @@ func (f *FrameWork) GetCredentials(presentation []byte) (*Iterator, error) {
 	return newIterator(jsonCredentials), nil
 }
 
-func (f *FrameWork) GetCredentialProofs(vc []byte) (*ProofIterator, error) {
+func (f *Framework) GetCredentialProofs(vc []byte) (*ProofIterator, error) {
 	parsed, err := verifiable.ParseCredential(vc, verifiable.WithDisabledProofCheck(), verifiable.WithJSONLDDocumentLoader(f.loader))
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse credential: %w", err)
@@ -160,7 +163,7 @@ func (f *FrameWork) GetCredentialProofs(vc []byte) (*ProofIterator, error) {
 	return parseProofs(parsed.Proofs)
 }
 
-func (f *FrameWork) GetPresentationProofs(vp []byte) (*ProofIterator, error) {
+func (f *Framework) GetPresentationProofs(vp []byte) (*ProofIterator, error) {
 	parsed, err := verifiable.ParsePresentation(vp, verifiable.WithPresDisabledProofCheck(), verifiable.WithPresJSONLDDocumentLoader(f.loader))
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse credential: %w", err)
@@ -202,7 +205,7 @@ const (
 	EcdsaSecp256k1Signature2019 = "EcdsaSecp256k1Signature2019"
 )
 
-func addProof(provableData provable, privKey []byte, opts *ProofOptions, loader *ld.DocumentLoader) error {
+func (f *Framework) addProof(provableData provable, privKey []byte, opts *ProofOptions) error {
 	var sigSuite signer.SignatureSuite
 
 	switch opts.SignatureType {
@@ -233,7 +236,7 @@ func addProof(provableData provable, privKey []byte, opts *ProofOptions, loader 
 		Domain:                  opts.Domain,
 		Challenge:               opts.Challenge,
 	}
-	return provableData.AddLinkedDataProof(signingCtx, jsonld.WithDocumentLoader(loader))
+	return provableData.AddLinkedDataProof(signingCtx, jsonld.WithDocumentLoader(f.loader))
 }
 
 // Proof is a LD Proof struct: https://w3c-ccg.github.io/ld-proofs/

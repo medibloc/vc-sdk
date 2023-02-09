@@ -28,7 +28,7 @@ func TestFullScenarioWithSecp256k1(t *testing.T) {
       "UniversityDegreeCredential"
     ]}`
 
-	frameWork, err := NewFrameWork()
+	frameWork, err := NewFramework()
 	require.NoError(t, err)
 
 	privKey, err := btcec.NewPrivateKey(btcec.S256())
@@ -126,7 +126,7 @@ func TestFullScenarioWithBBS(t *testing.T) {
       "UniversityDegreeCredential"
     ]}`
 
-	frameWork, err := NewFrameWork()
+	frameWork, err := NewFramework()
 	require.NoError(t, err)
 
 	pubKey, privKey, err := bbs12381g2pub.GenerateKeyPair(sha256.New, nil)
