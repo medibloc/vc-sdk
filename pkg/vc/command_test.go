@@ -91,7 +91,7 @@ func TestFullScenarioWithSecp256k1(t *testing.T) {
 	require.False(t, proofs.HasNext())
 	require.Nil(t, proofs.Next())
 
-	err = frameWork.VerifyPresentation(vpBytes, privKey.PubKey().SerializeUncompressed(), "EcdsaSecp256k1VerificationKey2019")
+	err = frameWork.VerifyPresentation(vpBytes, privKey.PubKey().SerializeUncompressed(), "EcdsaSecp256k1VerificationKey2019", nil)
 	require.NoError(t, err)
 
 	iterator, err := frameWork.GetCredentials(vpBytes)
@@ -208,7 +208,7 @@ func TestFullScenarioWithBBS(t *testing.T) {
 	require.False(t, proofs.HasNext())
 	require.Nil(t, proofs.Next())
 
-	err = frameWork.VerifyPresentation(vpBytes, pubKeyBz, bbsKeyType)
+	err = frameWork.VerifyPresentation(vpBytes, pubKeyBz, bbsKeyType, nil)
 	require.NoError(t, err)
 
 	iterator, err := frameWork.GetCredentials(vpBytes)
