@@ -78,7 +78,7 @@ func (f *Framework) CreatePresentationFromPD(credential []byte, pdBz []byte) (*v
 		return nil, fmt.Errorf("failed to parse credential: %w", err)
 	}
 
-	pd, err := parsePresentationDefinition(pdBz)
+	pd, err := ParsePresentationDefinition(pdBz)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse presentation definition: %w", err)
 	}
@@ -113,7 +113,7 @@ func (f *Framework) VerifyPresentation(vp []byte, pubKey []byte, pubKeyType stri
 	}
 
 	if pdBz != nil {
-		pd, err := parsePresentationDefinition(pdBz)
+		pd, err := ParsePresentationDefinition(pdBz)
 		if err != nil {
 			return fmt.Errorf("failed to parse presentation definition: %w", err)
 		}
@@ -284,7 +284,7 @@ func stringFromMap(m map[string]interface{}, k string) (string, bool) {
 	return v.(string), true
 }
 
-func parsePresentationDefinition(pdBz []byte) (*presexch.PresentationDefinition, error) {
+func ParsePresentationDefinition(pdBz []byte) (*presexch.PresentationDefinition, error) {
 	var pd *presexch.PresentationDefinition
 
 	if err := json.Unmarshal(pdBz, &pd); err != nil {
