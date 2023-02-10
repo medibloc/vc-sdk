@@ -4,15 +4,15 @@ import (
 	"crypto/sha256"
 	"encoding/json"
 	"fmt"
-	"github.com/google/uuid"
+	"testing"
+	"time"
+
 	"github.com/hyperledger/aries-framework-go/pkg/crypto/primitive/bbs12381g2pub"
 	"github.com/hyperledger/aries-framework-go/pkg/doc/ld"
 	"github.com/hyperledger/aries-framework-go/pkg/doc/presexch"
 	"github.com/hyperledger/aries-framework-go/pkg/doc/util"
 	"github.com/hyperledger/aries-framework-go/pkg/doc/verifiable"
 	"github.com/stretchr/testify/require"
-	"testing"
-	"time"
 )
 
 var (
@@ -170,7 +170,7 @@ func TestPresentationExchange_InvalidPresentationDefinitionSchema(t *testing.T) 
 		InputDescriptors: []*presexch.InputDescriptor{{
 			ID: "age_descriptor",
 			Schema: []*presexch.Schema{{
-				URI: fmt.Sprintf("https://my.test.context.jsonld/%s#%s", uuid.New().String(), "CustomType"),
+				URI: fmt.Sprintf("https://my.test.context.jsonld/%s#%s", "d39768c7-0cfe-4619-8989-640130749be2", "CustomType"),
 			}},
 			Constraints: &presexch.Constraints{
 				Fields: []*presexch.Field{

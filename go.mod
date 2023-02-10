@@ -10,7 +10,7 @@ require (
 	github.com/stretchr/testify v1.7.0
 )
 
-require github.com/google/uuid v1.1.2
+require github.com/google/uuid v1.1.2 // indirect
 
 require (
 	github.com/PaesslerAG/gval v1.1.0 // indirect
