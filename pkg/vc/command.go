@@ -292,7 +292,7 @@ func parsePresentationDefinition(pdBz []byte) (*presexch.PresentationDefinition,
 	}
 
 	if err := pd.ValidateSchema(); err != nil {
-		return nil, fmt.Errorf("invalid presentation definition")
+		return nil, fmt.Errorf("invalid presentation definition: %w", err)
 	}
 
 	return pd, nil
