@@ -102,31 +102,31 @@ func (f *Framework) SignPresentation(presentation []byte, privKey []byte, opts *
 
 // VerifyPresentation verifies a proof in the verifiable presentation.
 // If there is a presentation definition, also verifies that the presentation meets the requirements.
-func (f *Framework) VerifyPresentation(vp []byte, pubKey []byte, pubKeyType string, pdBz []byte) error {
+func (f *Framework) VerifyPresentation(vp []byte, pubKey []byte, pubKeyType string, pdBz []byte) (*verifiable.Presentation, error) {
 	presentation, err := verifiable.ParsePresentation(
 		vp,
 		verifiable.WithPresPublicKeyFetcher(verifiable.SingleKey(pubKey, pubKeyType)),
 		verifiable.WithPresJSONLDDocumentLoader(f.loader),
 	)
 	if err != nil {
-		return fmt.Errorf("failed to verify presentation: %w", err)
+		return nil, fmt.Errorf("failed to verify presentation: %w", err)
 	}
 
 	if pdBz != nil {
 		pd, err := parsePresentationDefinition(pdBz)
 		if err != nil {
-			return fmt.Errorf("failed to parse presentation definition: %w", err)
+			return nil, fmt.Errorf("failed to parse presentation definition: %w", err)
 		}
 
 		// TODO: For now, check of constraints in presentation definition is not supported
 		// https://github.com/hyperledger/aries-framework-go/issues/2108
 		_, err = pd.Match(presentation, f.loader, presexch.WithCredentialOptions(verifiable.WithJSONLDDocumentLoader(f.loader)))
 		if err != nil {
-			return fmt.Errorf("is not matched with presentation definition: %w", err)
+			return nil, fmt.Errorf("is not matched with presentation definition: %w", err)
 		}
 	}
 
-	return nil
+	return presentation, nil
 }
 
 // GetCredentials returns a Iterator that contains verifiable credentials in the verifiable presentation.
