@@ -208,9 +208,6 @@ func TestPresentationExchange_InvalidPresentationDefinitionSchema(t *testing.T) 
 }
 
 func init() {
-	f, _ = NewFramework()
-	loader = f.loader
-
 	pubKey, privKey, err := bbs12381g2pub.GenerateKeyPair(sha256.New, nil)
 	if err != nil {
 		panic(err)
@@ -225,6 +222,11 @@ func init() {
 	if err != nil {
 		panic(err)
 	}
+
+	mockVDR := NewMockVDR(bbsPubKeyBz, bbsKeyType)
+	f, _ = NewFramework(WithVDR(mockVDR))
+
+	loader = f.loader
 
 	cred := &verifiable.Credential{
 		ID:      "https://my-verifiable-credential.com",

@@ -29,14 +29,15 @@ func TestFullScenarioWithSecp256k1(t *testing.T) {
       "UniversityDegreeCredential"
     ]}`
 
-	f, err := NewFramework(WithVDR(mockVDR{}))
-	require.NoError(t, err)
-
 	privKey, err := btcec.NewPrivateKey(btcec.S256())
 	require.NoError(t, err)
 
 	fmt.Println(base64.RawURLEncoding.EncodeToString(privKey.Serialize()))
 	fmt.Println(base64.RawURLEncoding.EncodeToString(privKey.PubKey().SerializeUncompressed()))
+
+	mockVDR := NewMockVDR(privKey.PubKey().SerializeUncompressed(), "EcdsaSecp256k1VerificationKey2019")
+	f, err := NewFramework(WithVDR(mockVDR))
+	require.NoError(t, err)
 
 	vcBytes, err := f.SignCredential([]byte(cred), privKey.Serialize(), &ProofOptions{
 		VerificationMethod: "did:panacea:BFbUAkxqj3cXXYdNK9FAF9UuEmm7jCT5T77rXhBCvy2K#key1",
@@ -109,8 +110,6 @@ func TestFullScenarioWithSecp256k1(t *testing.T) {
 
 // TODO: refactor tests (merging this test with the one above)
 func TestFullScenarioWithBBS(t *testing.T) {
-	bbsKeyType := "Bls12381G2Key2020"
-	bbsSigType := "BbsBlsSignature2020"
 	cred := `{"@context": ["https://www.w3.org/2018/credentials/v1","https://www.w3.org/2018/credentials/examples/v1","https://w3id.org/security/bbs/v1"],
 	"issuer": "did:panacea:BFbUAkxqj3cXXYdNK9FAF9UuEmm7jCT5T77rXhBCvy2K",
 	"id": "https://abc.com/1",
@@ -127,13 +126,17 @@ func TestFullScenarioWithBBS(t *testing.T) {
       "UniversityDegreeCredential"
     ]}`
 
-	f, err := NewFramework()
-	require.NoError(t, err)
-
 	pubKey, privKey, err := bbs12381g2pub.GenerateKeyPair(sha256.New, nil)
 	require.NoError(t, err)
 
+	pubKeyBz, err := pubKey.Marshal()
+	require.NoError(t, err)
+
 	privKeyBz, err := privKey.Marshal()
+	require.NoError(t, err)
+
+	mockVDR := NewMockVDR(pubKeyBz, bbsKeyType)
+	f, err := NewFramework(WithVDR(mockVDR))
 	require.NoError(t, err)
 
 	vcBytes, err := f.SignCredential([]byte(cred), privKeyBz, &ProofOptions{
@@ -157,8 +160,6 @@ func TestFullScenarioWithBBS(t *testing.T) {
 	require.False(t, proofs.HasNext())
 	require.Nil(t, proofs.Next())
 
-	pubKeyBz, err := pubKey.Marshal()
-	require.NoError(t, err)
 	err = f.VerifyCredential(vcBytes, pubKeyBz, bbsKeyType)
 	require.NoError(t, err)
 
@@ -224,12 +225,31 @@ func TestFullScenarioWithBBS(t *testing.T) {
 	require.Nil(t, iterator.Next())
 }
 
-var _ didResolver = (*mockVDR)(nil)
+var _ didResolver = (*MockVDR)(nil)
 
-type mockVDR struct {
+type MockVDR struct {
+	pubKeyBz   []byte
+	pubKeyType string
 }
 
-func (v mockVDR) Resolve(did string) (*did.Doc, error) {
-	// TODO
-	return nil, nil
+func NewMockVDR(pubKeyBz []byte, pubKeyType string) *MockVDR {
+	return &MockVDR{
+		pubKeyBz:   pubKeyBz,
+		pubKeyType: pubKeyType,
+	}
+}
+
+func (v *MockVDR) Resolve(didID string) (*did.Doc, error) {
+	signingKey := did.VerificationMethod{
+		ID:         didID + "#key1",
+		Type:       v.pubKeyType,
+		Controller: didID,
+		Value:      v.pubKeyBz,
+	}
+
+	return &did.Doc{
+		Context:            []string{"https://w3id.org/did/v1"},
+		ID:                 didID,
+		VerificationMethod: []did.VerificationMethod{signingKey},
+	}, nil
 }
