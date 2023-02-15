@@ -224,7 +224,7 @@ func init() {
 	}
 
 	mockVDR := NewMockVDR(bbsPubKeyBz, bbsKeyType)
-	f, _ = NewFramework(WithVDR(mockVDR))
+	f, _ = NewFramework(mockVDR)
 
 	loader = f.loader
 

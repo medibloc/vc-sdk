@@ -1,31 +1,24 @@
 package vc
 
 import (
-	"fmt"
-	"github.com/hyperledger/aries-framework-go/pkg/doc/did"
-	"github.com/hyperledger/aries-framework-go/pkg/doc/signature/verifier"
-	"net/http"
-	"strings"
-
 	"github.com/hyperledger/aries-framework-go/component/storageutil/mem"
 	"github.com/hyperledger/aries-framework-go/pkg/doc/ld"
+	"github.com/hyperledger/aries-framework-go/pkg/doc/verifiable"
+	"github.com/hyperledger/aries-framework-go/pkg/framework/aries/api/vdr"
 	"github.com/hyperledger/aries-framework-go/pkg/framework/context"
 	ldstore "github.com/hyperledger/aries-framework-go/pkg/store/ld"
 	jsonld "github.com/piprate/json-gold/ld"
+	"net/http"
 )
 
-type didResolver interface {
-	Resolve(did string) (didDoc *did.Doc, err error)
-}
-
 type Framework struct {
-	loader *ld.DocumentLoader
-	vdr    didResolver
+	loader   *ld.DocumentLoader
+	resolver *verifiable.VDRKeyResolver
 }
 
 type FrameworkOption func(opts *Framework) error
 
-func NewFramework(opts ...FrameworkOption) (*Framework, error) {
+func NewFramework(vdr vdr.Registry) (*Framework, error) {
 	storeProvider := mem.NewProvider()
 	contextStore, err := ldstore.NewContextStore(storeProvider)
 	if err != nil {
@@ -53,44 +46,10 @@ func NewFramework(opts ...FrameworkOption) (*Framework, error) {
 		return nil, err
 	}
 
-	framework := &Framework{
-		loader: loader,
-	}
+	resolver := verifiable.NewVDRKeyResolver(vdr)
 
-	for _, opt := range opts {
-		if err := opt(framework); err != nil {
-			return nil, fmt.Errorf("framework option failed: %w", err)
-		}
-	}
-
-	return framework, nil
-}
-
-// We can use verifiable.NewVDRKeyResolver instead of using FrameworkOption in the future version of aries
-
-func WithVDR(vdr didResolver) FrameworkOption {
-	return func(opts *Framework) error {
-		opts.vdr = vdr
-		return nil
-	}
-}
-
-func (f *Framework) resolvePublicKey(did, keyID string) (*verifier.PublicKey, error) {
-	didDoc, err := f.vdr.Resolve(did)
-	if err != nil {
-		return nil, fmt.Errorf("failed to resolve did(%s): %w", did, err)
-	}
-
-	for _, verifications := range didDoc.VerificationMethods() {
-		for _, verification := range verifications {
-			if strings.Contains(verification.VerificationMethod.ID, keyID) {
-				return &verifier.PublicKey{
-					Type:  verification.VerificationMethod.Type,
-					Value: verification.VerificationMethod.Value,
-				}, nil
-			}
-		}
-	}
-
-	return nil, fmt.Errorf("public key with key ID %s is not found for  %s", keyID, did)
+	return &Framework{
+		loader:   loader,
+		resolver: resolver,
+	}, nil
 }

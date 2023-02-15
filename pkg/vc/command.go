@@ -33,10 +33,10 @@ func (f *Framework) SignCredential(credential []byte, privKey []byte, opts *Proo
 }
 
 // VerifyCredential verifies a proof in the verifiable credential.
-func (f *Framework) VerifyCredential(vc []byte, pubKey []byte, pubKeyType string) error {
+func (f *Framework) VerifyCredential(vc []byte) error {
 	_, err := verifiable.ParseCredential(
 		vc,
-		verifiable.WithPublicKeyFetcher(verifiable.SingleKey(pubKey, pubKeyType)),
+		verifiable.WithPublicKeyFetcher(f.resolver.PublicKeyFetcher()),
 		verifiable.WithJSONLDDocumentLoader(f.loader),
 	)
 	if err != nil {
@@ -103,15 +103,17 @@ func (f *Framework) SignPresentation(presentation []byte, privKey []byte, opts *
 // VerifyPresentation verifies a proof in the verifiable presentation.
 // If there is a presentation definition, also verifies that the presentation meets the requirements.
 func (f *Framework) VerifyPresentation(vp []byte, pdBz []byte) error {
+	// verify VP
 	presentation, err := verifiable.ParsePresentation(
 		vp,
-		verifiable.WithPresPublicKeyFetcher(f.resolvePublicKey),
+		verifiable.WithPresPublicKeyFetcher(f.resolver.PublicKeyFetcher()),
 		verifiable.WithPresJSONLDDocumentLoader(f.loader),
 	)
 	if err != nil {
 		return fmt.Errorf("failed to verify presentation: %w", err)
 	}
 
+	// verify PD
 	if pdBz != nil {
 		pd, err := parsePresentationDefinition(pdBz)
 		if err != nil {
@@ -126,10 +128,22 @@ func (f *Framework) VerifyPresentation(vp []byte, pdBz []byte) error {
 		}
 	}
 
+	// verify VCs
+	for _, cred := range presentation.Credentials() {
+		vc, err := json.Marshal(cred)
+		if err != nil {
+			return fmt.Errorf("failed to read credentials from presentation: %w", err)
+		}
+
+		if err = f.VerifyCredential(vc); err != nil {
+			return fmt.Errorf("failed to verify credential: %w", err)
+		}
+	}
+
 	return nil
 }
 
-// GetCredentials returns a Iterator that contains verifiable credentials in the verifiable presentation.
+// GetCredentials returns an Iterator that contains verifiable credentials in the verifiable presentation.
 func (f *Framework) GetCredentials(presentation []byte) (*Iterator, error) {
 	pres, err := verifiable.ParsePresentation(presentation, verifiable.WithPresDisabledProofCheck(), verifiable.WithPresJSONLDDocumentLoader(f.loader))
 	if err != nil {

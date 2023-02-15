@@ -5,6 +5,7 @@ import (
 	"encoding/base64"
 	"fmt"
 	"github.com/hyperledger/aries-framework-go/pkg/doc/did"
+	"github.com/hyperledger/aries-framework-go/pkg/framework/aries/api/vdr"
 	"testing"
 
 	"github.com/btcsuite/btcd/btcec"
@@ -36,7 +37,7 @@ func TestFullScenarioWithSecp256k1(t *testing.T) {
 	fmt.Println(base64.RawURLEncoding.EncodeToString(privKey.PubKey().SerializeUncompressed()))
 
 	mockVDR := NewMockVDR(privKey.PubKey().SerializeUncompressed(), "EcdsaSecp256k1VerificationKey2019")
-	f, err := NewFramework(WithVDR(mockVDR))
+	f, err := NewFramework(mockVDR)
 	require.NoError(t, err)
 
 	vcBytes, err := f.SignCredential([]byte(cred), privKey.Serialize(), &ProofOptions{
@@ -60,7 +61,7 @@ func TestFullScenarioWithSecp256k1(t *testing.T) {
 	require.False(t, proofs.HasNext())
 	require.Nil(t, proofs.Next())
 
-	err = f.VerifyCredential(vcBytes, privKey.PubKey().SerializeUncompressed(), "EcdsaSecp256k1VerificationKey2019")
+	err = f.VerifyCredential(vcBytes)
 	require.NoError(t, err)
 
 	pres := fmt.Sprintf(`{"@context": ["https://www.w3.org/2018/credentials/v1"],
@@ -101,7 +102,7 @@ func TestFullScenarioWithSecp256k1(t *testing.T) {
 	require.NotNil(t, iterator)
 
 	require.True(t, iterator.HasNext())
-	err = f.VerifyCredential(iterator.Next(), privKey.PubKey().SerializeUncompressed(), "EcdsaSecp256k1VerificationKey2019")
+	err = f.VerifyCredential(iterator.Next())
 	require.NoError(t, err)
 
 	require.False(t, iterator.HasNext())
@@ -136,7 +137,7 @@ func TestFullScenarioWithBBS(t *testing.T) {
 	require.NoError(t, err)
 
 	mockVDR := NewMockVDR(pubKeyBz, bbsKeyType)
-	f, err := NewFramework(WithVDR(mockVDR))
+	f, err := NewFramework(mockVDR)
 	require.NoError(t, err)
 
 	vcBytes, err := f.SignCredential([]byte(cred), privKeyBz, &ProofOptions{
@@ -160,7 +161,7 @@ func TestFullScenarioWithBBS(t *testing.T) {
 	require.False(t, proofs.HasNext())
 	require.Nil(t, proofs.Next())
 
-	err = f.VerifyCredential(vcBytes, pubKeyBz, bbsKeyType)
+	err = f.VerifyCredential(vcBytes)
 	require.NoError(t, err)
 
 	frame := []byte(`{"@context": ["https://www.w3.org/2018/credentials/v1","https://www.w3.org/2018/credentials/examples/v1","https://w3id.org/security/bbs/v1"],
@@ -218,14 +219,12 @@ func TestFullScenarioWithBBS(t *testing.T) {
 	require.NotNil(t, iterator)
 
 	require.True(t, iterator.HasNext())
-	err = f.VerifyCredential(iterator.Next(), pubKeyBz, bbsKeyType)
+	err = f.VerifyCredential(iterator.Next())
 	require.NoError(t, err)
 
 	require.False(t, iterator.HasNext())
 	require.Nil(t, iterator.Next())
 }
-
-var _ didResolver = (*MockVDR)(nil)
 
 type MockVDR struct {
 	pubKeyBz   []byte
@@ -239,7 +238,7 @@ func NewMockVDR(pubKeyBz []byte, pubKeyType string) *MockVDR {
 	}
 }
 
-func (v *MockVDR) Resolve(didID string) (*did.Doc, error) {
+func (v *MockVDR) Resolve(didID string, _ ...vdr.DIDMethodOption) (*did.DocResolution, error) {
 	signingKey := did.VerificationMethod{
 		ID:         didID + "#key1",
 		Type:       v.pubKeyType,
@@ -247,9 +246,27 @@ func (v *MockVDR) Resolve(didID string) (*did.Doc, error) {
 		Value:      v.pubKeyBz,
 	}
 
-	return &did.Doc{
-		Context:            []string{"https://w3id.org/did/v1"},
-		ID:                 didID,
-		VerificationMethod: []did.VerificationMethod{signingKey},
+	return &did.DocResolution{
+		DIDDocument: &did.Doc{
+			Context:            []string{"https://w3id.org/did/v1"},
+			ID:                 didID,
+			VerificationMethod: []did.VerificationMethod{signingKey},
+		},
 	}, nil
+}
+
+func (v *MockVDR) Create(_ string, _ *did.Doc, _ ...vdr.DIDMethodOption) (*did.DocResolution, error) {
+	return nil, nil
+}
+
+func (v *MockVDR) Update(_ *did.Doc, _ ...vdr.DIDMethodOption) error {
+	return nil
+}
+
+func (v *MockVDR) Deactivate(_ string, _ ...vdr.DIDMethodOption) error {
+	return nil
+}
+
+func (v *MockVDR) Close() error {
+	return nil
 }
