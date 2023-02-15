@@ -4,6 +4,7 @@ import (
 	"crypto/sha256"
 	"encoding/base64"
 	"fmt"
+	"github.com/hyperledger/aries-framework-go/pkg/doc/did"
 	"testing"
 
 	"github.com/btcsuite/btcd/btcec"
@@ -28,7 +29,7 @@ func TestFullScenarioWithSecp256k1(t *testing.T) {
       "UniversityDegreeCredential"
     ]}`
 
-	f, err := NewFramework()
+	f, err := NewFramework(WithVDR(mockVDR{}))
 	require.NoError(t, err)
 
 	privKey, err := btcec.NewPrivateKey(btcec.S256())
@@ -91,7 +92,7 @@ func TestFullScenarioWithSecp256k1(t *testing.T) {
 	require.False(t, proofs.HasNext())
 	require.Nil(t, proofs.Next())
 
-	err = f.VerifyPresentation(vpBytes, privKey.PubKey().SerializeUncompressed(), "EcdsaSecp256k1VerificationKey2019", nil)
+	err = f.VerifyPresentation(vpBytes, nil)
 	require.NoError(t, err)
 
 	iterator, err := f.GetCredentials(vpBytes)
@@ -208,7 +209,7 @@ func TestFullScenarioWithBBS(t *testing.T) {
 	require.False(t, proofs.HasNext())
 	require.Nil(t, proofs.Next())
 
-	err = f.VerifyPresentation(vpBytes, pubKeyBz, bbsKeyType, nil)
+	err = f.VerifyPresentation(vpBytes, nil)
 	require.NoError(t, err)
 
 	iterator, err := f.GetCredentials(vpBytes)
@@ -221,4 +222,14 @@ func TestFullScenarioWithBBS(t *testing.T) {
 
 	require.False(t, iterator.HasNext())
 	require.Nil(t, iterator.Next())
+}
+
+var _ didResolver = (*mockVDR)(nil)
+
+type mockVDR struct {
+}
+
+func (v mockVDR) Resolve(did string) (*did.Doc, error) {
+	// TODO
+	return nil, nil
 }

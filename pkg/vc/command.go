@@ -102,10 +102,10 @@ func (f *Framework) SignPresentation(presentation []byte, privKey []byte, opts *
 
 // VerifyPresentation verifies a proof in the verifiable presentation.
 // If there is a presentation definition, also verifies that the presentation meets the requirements.
-func (f *Framework) VerifyPresentation(vp []byte, pubKey []byte, pubKeyType string, pdBz []byte) error {
+func (f *Framework) VerifyPresentation(vp []byte, pdBz []byte) error {
 	presentation, err := verifiable.ParsePresentation(
 		vp,
-		verifiable.WithPresPublicKeyFetcher(verifiable.SingleKey(pubKey, pubKeyType)),
+		verifiable.WithPresPublicKeyFetcher(f.resolvePublicKey),
 		verifiable.WithPresJSONLDDocumentLoader(f.loader),
 	)
 	if err != nil {
