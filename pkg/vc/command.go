@@ -102,7 +102,7 @@ func (f *Framework) SignPresentation(presentation []byte, privKey []byte, opts *
 
 // VerifyPresentation verifies a proof in the verifiable presentation.
 // If there is a presentation definition, also verifies that the presentation meets the requirements.
-func (f *Framework) VerifyPresentation(vp []byte, pdBz []byte) (*verifiable.Presentation, error) {
+func (f *Framework) VerifyPresentation(vp []byte, pdBz []byte) error {
 	// verify VP
 	presentation, err := verifiable.ParsePresentation(
 		vp,
@@ -110,21 +110,21 @@ func (f *Framework) VerifyPresentation(vp []byte, pdBz []byte) (*verifiable.Pres
 		verifiable.WithPresJSONLDDocumentLoader(f.loader),
 	)
 	if err != nil {
-		return nil, fmt.Errorf("failed to verify presentation: %w", err)
+		return fmt.Errorf("failed to verify presentation: %w", err)
 	}
 
 	// verify PD
 	if pdBz != nil {
 		pd, err := parsePresentationDefinition(pdBz)
 		if err != nil {
-			return nil, fmt.Errorf("failed to parse presentation definition: %w", err)
+			return fmt.Errorf("failed to parse presentation definition: %w", err)
 		}
 
 		// TODO: For now, check of constraints in presentation definition is not supported
 		// https://github.com/hyperledger/aries-framework-go/issues/2108
 		_, err = pd.Match(presentation, f.loader, presexch.WithCredentialOptions(verifiable.WithJSONLDDocumentLoader(f.loader)))
 		if err != nil {
-			return nil, fmt.Errorf("is not matched with presentation definition: %w", err)
+			return fmt.Errorf("is not matched with presentation definition: %w", err)
 		}
 	}
 
@@ -132,15 +132,15 @@ func (f *Framework) VerifyPresentation(vp []byte, pdBz []byte) (*verifiable.Pres
 	for _, cred := range presentation.Credentials() {
 		vc, err := json.Marshal(cred)
 		if err != nil {
-			return nil, fmt.Errorf("failed to read credentials from presentation: %w", err)
+			return fmt.Errorf("failed to read credentials from presentation: %w", err)
 		}
 
 		if err = f.VerifyCredential(vc); err != nil {
-			return nil, fmt.Errorf("failed to verify credential: %w", err)
+			return fmt.Errorf("failed to verify credential: %w", err)
 		}
 	}
 
-	return presentation, nil
+	return nil
 }
 
 // GetCredentials returns an Iterator that contains verifiable credentials in the verifiable presentation.

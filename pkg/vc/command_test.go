@@ -94,7 +94,7 @@ func TestFullScenarioWithSecp256k1(t *testing.T) {
 	require.False(t, proofs.HasNext())
 	require.Nil(t, proofs.Next())
 
-	_, err = f.VerifyPresentation(vpBytes, nil)
+	err = f.VerifyPresentation(vpBytes, nil)
 	require.NoError(t, err)
 
 	iterator, err := f.GetCredentials(vpBytes)
@@ -211,7 +211,7 @@ func TestFullScenarioWithBBS(t *testing.T) {
 	require.False(t, proofs.HasNext())
 	require.Nil(t, proofs.Next())
 
-	_, err = f.VerifyPresentation(vpBytes, nil)
+	err = f.VerifyPresentation(vpBytes, nil)
 	require.NoError(t, err)
 
 	iterator, err := f.GetCredentials(vpBytes)
