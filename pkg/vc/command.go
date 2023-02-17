@@ -101,7 +101,7 @@ func (f *Framework) SignPresentation(presentation []byte, privKey []byte, opts *
 }
 
 // VerifyPresentation verifies a proof in the verifiable presentation.
-// If there is a presentation definition, also verifies that the presentation meets the requirements.
+// If there is a presentation definition provided, also verifies that the presentation meets the requirements.
 func (f *Framework) VerifyPresentation(vp []byte, pdBz []byte) (*verifiable.Presentation, error) {
 	// verify VP
 	presentation, err := verifiable.ParsePresentation(
@@ -113,7 +113,7 @@ func (f *Framework) VerifyPresentation(vp []byte, pdBz []byte) (*verifiable.Pres
 		return nil, fmt.Errorf("failed to verify presentation: %w", err)
 	}
 
-	// verify PD
+	// verify presentation against PD
 	if pdBz != nil {
 		pd, err := parsePresentationDefinition(pdBz)
 		if err != nil {
