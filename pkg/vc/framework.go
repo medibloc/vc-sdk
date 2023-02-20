@@ -1,20 +1,22 @@
 package vc
 
 import (
-	"net/http"
-
 	"github.com/hyperledger/aries-framework-go/component/storageutil/mem"
 	"github.com/hyperledger/aries-framework-go/pkg/doc/ld"
+	"github.com/hyperledger/aries-framework-go/pkg/doc/verifiable"
+	"github.com/hyperledger/aries-framework-go/pkg/framework/aries/api/vdr"
 	"github.com/hyperledger/aries-framework-go/pkg/framework/context"
 	ldstore "github.com/hyperledger/aries-framework-go/pkg/store/ld"
 	jsonld "github.com/piprate/json-gold/ld"
+	"net/http"
 )
 
 type Framework struct {
-	loader *ld.DocumentLoader
+	loader   *ld.DocumentLoader
+	resolver *verifiable.VDRKeyResolver
 }
 
-func NewFramework() (*Framework, error) {
+func NewFramework(vdr vdr.Registry) (*Framework, error) {
 	storeProvider := mem.NewProvider()
 	contextStore, err := ldstore.NewContextStore(storeProvider)
 	if err != nil {
@@ -42,7 +44,10 @@ func NewFramework() (*Framework, error) {
 		return nil, err
 	}
 
+	resolver := verifiable.NewVDRKeyResolver(vdr)
+
 	return &Framework{
-		loader: loader,
+		loader:   loader,
+		resolver: resolver,
 	}, nil
 }

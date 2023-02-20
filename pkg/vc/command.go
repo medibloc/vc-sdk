@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/hyperledger/aries-framework-go/pkg/doc/presexch"
+
 	controllerverifiable "github.com/hyperledger/aries-framework-go/pkg/controller/command/verifiable"
 	"github.com/hyperledger/aries-framework-go/pkg/doc/signature/jsonld"
 	"github.com/hyperledger/aries-framework-go/pkg/doc/signature/signer"
@@ -31,10 +33,10 @@ func (f *Framework) SignCredential(credential []byte, privKey []byte, opts *Proo
 }
 
 // VerifyCredential verifies a proof in the verifiable credential.
-func (f *Framework) VerifyCredential(vc []byte, pubKey []byte, pubKeyType string) error {
+func (f *Framework) VerifyCredential(vc []byte) error {
 	_, err := verifiable.ParseCredential(
 		vc,
-		verifiable.WithPublicKeyFetcher(verifiable.SingleKey(pubKey, pubKeyType)),
+		verifiable.WithPublicKeyFetcher(f.resolver.PublicKeyFetcher()),
 		verifiable.WithJSONLDDocumentLoader(f.loader),
 	)
 	if err != nil {
@@ -68,6 +70,22 @@ func (f *Framework) DeriveCredential(vc []byte, frame []byte, nonce []byte, issu
 	return derived.MarshalJSON()
 }
 
+// CreatePresentationFromPD creates verifiable presentation based on presentation definition.
+func (f *Framework) CreatePresentationFromPD(credential []byte, pdBz []byte) (*verifiable.Presentation, error) {
+	cred, err := verifiable.ParseCredential(
+		credential, verifiable.WithDisabledProofCheck(), verifiable.WithJSONLDDocumentLoader(f.loader))
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse credential: %w", err)
+	}
+
+	pd, err := parsePresentationDefinition(pdBz)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse presentation definition: %w", err)
+	}
+
+	return pd.CreateVP([]*verifiable.Credential{cred}, f.loader, verifiable.WithJSONLDDocumentLoader(f.loader))
+}
+
 // SignPresentation creates a verifiable presentation by adding a proof to the presentation.
 func (f *Framework) SignPresentation(presentation []byte, privKey []byte, opts *ProofOptions) ([]byte, error) {
 	pres, err := verifiable.ParsePresentation(presentation, verifiable.WithPresDisabledProofCheck(), verifiable.WithPresJSONLDDocumentLoader(f.loader))
@@ -83,19 +101,49 @@ func (f *Framework) SignPresentation(presentation []byte, privKey []byte, opts *
 }
 
 // VerifyPresentation verifies a proof in the verifiable presentation.
-func (f *Framework) VerifyPresentation(vp []byte, pubKey []byte, pubKeyType string) error {
-	_, err := verifiable.ParsePresentation(
+// If there is a presentation definition provided, also verifies that the presentation meets the requirements.
+func (f *Framework) VerifyPresentation(vp []byte, pdBz []byte) (*verifiable.Presentation, error) {
+	// verify VP
+	presentation, err := verifiable.ParsePresentation(
 		vp,
-		verifiable.WithPresPublicKeyFetcher(verifiable.SingleKey(pubKey, pubKeyType)),
+		verifiable.WithPresPublicKeyFetcher(f.resolver.PublicKeyFetcher()),
 		verifiable.WithPresJSONLDDocumentLoader(f.loader),
 	)
 	if err != nil {
-		return fmt.Errorf("failed to verify presentation: %w", err)
+		return nil, fmt.Errorf("failed to verify presentation: %w", err)
 	}
-	return nil
+
+	// verify presentation against PD
+	if pdBz != nil {
+		pd, err := parsePresentationDefinition(pdBz)
+		if err != nil {
+			return nil, fmt.Errorf("failed to parse presentation definition: %w", err)
+		}
+
+		// TODO: For now, check of constraints in presentation definition is not supported
+		// https://github.com/hyperledger/aries-framework-go/issues/2108
+		_, err = pd.Match(presentation, f.loader, presexch.WithCredentialOptions(verifiable.WithJSONLDDocumentLoader(f.loader)))
+		if err != nil {
+			return nil, fmt.Errorf("is not matched with presentation definition: %w", err)
+		}
+	}
+
+	// verify VCs
+	for _, cred := range presentation.Credentials() {
+		vc, err := json.Marshal(cred)
+		if err != nil {
+			return nil, fmt.Errorf("failed to read credentials from presentation: %w", err)
+		}
+
+		if err = f.VerifyCredential(vc); err != nil {
+			return nil, fmt.Errorf("failed to verify credential: %w", err)
+		}
+	}
+
+	return presentation, nil
 }
 
-// GetCredentials returns a Iterator that contains verifiable credentials in the verifiable presentation.
+// GetCredentials returns an Iterator that contains verifiable credentials in the verifiable presentation.
 func (f *Framework) GetCredentials(presentation []byte) (*Iterator, error) {
 	pres, err := verifiable.ParsePresentation(presentation, verifiable.WithPresDisabledProofCheck(), verifiable.WithPresJSONLDDocumentLoader(f.loader))
 	if err != nil {
@@ -248,4 +296,18 @@ func stringFromMap(m map[string]interface{}, k string) (string, bool) {
 		return "", false
 	}
 	return v.(string), true
+}
+
+func parsePresentationDefinition(pdBz []byte) (*presexch.PresentationDefinition, error) {
+	var pd *presexch.PresentationDefinition
+
+	if err := json.Unmarshal(pdBz, &pd); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal presentation definition: %w", err)
+	}
+
+	if err := pd.ValidateSchema(); err != nil {
+		return nil, fmt.Errorf("invalid presentation definition: %w", err)
+	}
+
+	return pd, nil
 }
