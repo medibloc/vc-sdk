@@ -78,7 +78,7 @@ func TestPresentationExchange_BBSProof(t *testing.T) {
 	require.False(t, proofs.HasNext())
 	require.Nil(t, proofs.Next())
 
-	_, err = f.VerifyPresentation(signedVP, pd)
+	_, err = f.VerifyPresentation(signedVP, WithPresentationDefinition(pd))
 	require.NoError(t, err)
 }
 
@@ -117,7 +117,7 @@ func TestPresentationExchange_TamperedVP(t *testing.T) {
 
 	marshaledFakeVP, err := vpFake.MarshalJSON()
 	require.NoError(t, err)
-	_, err = f.VerifyPresentation(marshaledFakeVP, nil)
+	_, err = f.VerifyPresentation(marshaledFakeVP)
 	require.Error(t, err, "invalid BLS12-381 signature")
 }
 
@@ -164,7 +164,7 @@ func TestPresentationExchange_InvalidPresentationDefinitionID(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	_, err = f.VerifyPresentation(signedVP, anotherPDBz)
+	_, err = f.VerifyPresentation(signedVP, WithPresentationDefinition(anotherPDBz))
 	require.Error(t, err, "is not matched with presentation definition")
 }
 
@@ -208,7 +208,7 @@ func TestPresentationExchange_InvalidPresentationDefinitionSchema(t *testing.T) 
 	})
 	require.NoError(t, err)
 
-	_, err = f.VerifyPresentation(signedVP, anotherPDBz)
+	_, err = f.VerifyPresentation(signedVP, WithPresentationDefinition(anotherPDBz))
 	require.Error(t, err, "is not matched with presentation definition")
 }
 

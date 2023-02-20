@@ -102,7 +102,13 @@ func (f *Framework) SignPresentation(presentation []byte, privKey []byte, opts *
 
 // VerifyPresentation verifies a proof in the verifiable presentation.
 // If there is a presentation definition provided, also verifies that the presentation meets the requirements.
-func (f *Framework) VerifyPresentation(vp []byte, pdBz []byte) (*verifiable.Presentation, error) {
+func (f *Framework) VerifyPresentation(vp []byte, opts ...VerificationOption) (*verifiable.Presentation, error) {
+	verificationOpts := defaultVerifyVPOptions()
+
+	for _, opt := range opts {
+		opt(verificationOpts)
+	}
+
 	// verify VP
 	presentation, err := verifiable.ParsePresentation(
 		vp,
@@ -114,8 +120,8 @@ func (f *Framework) VerifyPresentation(vp []byte, pdBz []byte) (*verifiable.Pres
 	}
 
 	// verify presentation against PD
-	if pdBz != nil {
-		pd, err := parsePresentationDefinition(pdBz)
+	if verificationOpts.pd != nil {
+		pd, err := parsePresentationDefinition(verificationOpts.pd)
 		if err != nil {
 			return nil, fmt.Errorf("failed to parse presentation definition: %w", err)
 		}
@@ -310,4 +316,20 @@ func parsePresentationDefinition(pdBz []byte) (*presexch.PresentationDefinition,
 	}
 
 	return pd, nil
+}
+
+type verificationOptions struct {
+	pd []byte
+}
+
+type VerificationOption func(opts *verificationOptions)
+
+func defaultVerifyVPOptions() *verificationOptions {
+	return &verificationOptions{}
+}
+
+func WithPresentationDefinition(pd []byte) VerificationOption {
+	return func(opts *verificationOptions) {
+		opts.pd = pd
+	}
 }
