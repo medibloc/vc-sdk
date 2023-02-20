@@ -16,8 +16,6 @@ type Framework struct {
 	resolver *verifiable.VDRKeyResolver
 }
 
-type FrameworkOption func(opts *Framework) error
-
 func NewFramework(vdr vdr.Registry) (*Framework, error) {
 	storeProvider := mem.NewProvider()
 	contextStore, err := ldstore.NewContextStore(storeProvider)
