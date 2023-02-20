@@ -45,6 +45,7 @@ func TestPresentationExchange_BBSProof(t *testing.T) {
 	vp.Context = append(vp.Context, "https://w3id.org/security/bbs/v1")
 
 	vpBytes, err := json.MarshalIndent(vp, "", "\t")
+	require.NoError(t, err)
 
 	signedVP, err := f.SignPresentation(vpBytes, bbsPrivKeyBz, &ProofOptions{
 		VerificationMethod: verificationMethod,
@@ -92,6 +93,7 @@ func TestPresentationExchange_TamperedVP(t *testing.T) {
 	vp.Context = append(vp.Context, "https://w3id.org/security/bbs/v1")
 
 	vpBytes, err := json.MarshalIndent(vp, "", "\t")
+	require.NoError(t, err)
 
 	signedVP, err := f.SignPresentation(vpBytes, bbsPrivKeyBz, &ProofOptions{
 		VerificationMethod: verificationMethod,
@@ -103,6 +105,7 @@ func TestPresentationExchange_TamperedVP(t *testing.T) {
 	require.NoError(t, err)
 
 	parsedVP, err := verifiable.ParsePresentation(signedVP, verifiable.WithPresPublicKeyFetcher(verifiable.SingleKey(bbsPubKeyBz, bbsKeyType)), verifiable.WithPresJSONLDDocumentLoader(loader))
+	require.NoError(t, err)
 	_, err = json.MarshalIndent(parsedVP, "", "\t")
 	require.NoError(t, err)
 
@@ -150,6 +153,7 @@ func TestPresentationExchange_InvalidPresentationDefinitionID(t *testing.T) {
 	vp.Context = append(vp.Context, "https://w3id.org/security/bbs/v1")
 
 	vpBytes, err := json.MarshalIndent(vp, "", "\t")
+	require.NoError(t, err)
 
 	signedVP, err := f.SignPresentation(vpBytes, bbsPrivKeyBz, &ProofOptions{
 		VerificationMethod: verificationMethod,
@@ -193,6 +197,7 @@ func TestPresentationExchange_InvalidPresentationDefinitionSchema(t *testing.T) 
 	vp.Context = append(vp.Context, "https://w3id.org/security/bbs/v1")
 
 	vpBytes, err := json.MarshalIndent(vp, "", "\t")
+	require.NoError(t, err)
 
 	signedVP, err := f.SignPresentation(vpBytes, bbsPrivKeyBz, &ProofOptions{
 		VerificationMethod: verificationMethod,

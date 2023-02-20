@@ -18,17 +18,17 @@ type didClient interface {
 }
 
 type PanaceaVDR struct {
-	DidCli didClient
+	didCli didClient
 }
 
 func NewPanaceaVDR(didCli didClient) *PanaceaVDR {
 	return &PanaceaVDR{
-		DidCli: didCli,
+		didCli: didCli,
 	}
 }
 
 func (r *PanaceaVDR) Resolve(didID string, _ ...vdr.DIDMethodOption) (*did.DocResolution, error) {
-	didDocWithSeq, err := r.DidCli.GetDID(context.Background(), didID)
+	didDocWithSeq, err := r.didCli.GetDID(context.Background(), didID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get DID document: %w", err)
 	}

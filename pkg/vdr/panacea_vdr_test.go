@@ -2,9 +2,10 @@ package vdr
 
 import (
 	"context"
+	"testing"
+
 	didtypes "github.com/medibloc/panacea-core/v2/x/did/types"
 	"github.com/stretchr/testify/require"
-	"testing"
 )
 
 func TestPanaceaVDR_Resolve(t *testing.T) {
