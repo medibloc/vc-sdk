@@ -8,10 +8,10 @@ import (
 	"time"
 
 	"github.com/hyperledger/aries-framework-go/pkg/crypto/primitive/bbs12381g2pub"
-	"github.com/hyperledger/aries-framework-go/pkg/doc/ld"
 	"github.com/hyperledger/aries-framework-go/pkg/doc/presexch"
 	"github.com/hyperledger/aries-framework-go/pkg/doc/util"
 	"github.com/hyperledger/aries-framework-go/pkg/doc/verifiable"
+	"github.com/piprate/json-gold/ld"
 	"github.com/stretchr/testify/require"
 )
 
@@ -29,7 +29,7 @@ var (
 	pdWithPredicate []byte
 
 	f      *Framework
-	loader *ld.DocumentLoader
+	loader ld.DocumentLoader
 )
 
 const (
@@ -240,9 +240,7 @@ func init() {
 		Issuer: verifiable.Issuer{
 			ID: "did:panacea:76e12ec712ebc6f1c221ebfeb1f",
 		},
-		Issued: &util.TimeWrapper{
-			Time: time.Time{},
-		},
+		Issued: util.NewTime(time.Time{}),
 		Subject: map[string]interface{}{
 			"id":          "did:panacea:ebfeb1f712ebc6f1c276e12ec21",
 			"first_name":  "Hansol",
@@ -260,7 +258,7 @@ func init() {
 		InputDescriptors: []*presexch.InputDescriptor{{
 			ID:      "age_descriptor",
 			Purpose: "Your age should be greater or equal to 18.",
-			// required temporarily in v0.1.8 for schema verification.
+			// required temporarily in v0.1.6 for schema verification.
 			// schema will be optional by supporting presentation exchange v2
 			// https://github.com/hyperledger/aries-framework-go/commit/66d9bf30de2f5cd6116adaac27f277b45077f26f
 			Schema: []*presexch.Schema{{
@@ -271,7 +269,7 @@ func init() {
 				Required: false,
 			}},
 			Constraints: &presexch.Constraints{
-				LimitDisclosure: &required,
+				LimitDisclosure: true,
 				Fields: []*presexch.Field{
 					{
 						Path: []string{"$.credentialSubject.age"},
@@ -308,7 +306,7 @@ func init() {
 				Required: false,
 			}},
 			Constraints: &presexch.Constraints{
-				LimitDisclosure: &required,
+				LimitDisclosure: true,
 				Fields: []*presexch.Field{
 					{
 						Path:      []string{"$.credentialSubject.age"},

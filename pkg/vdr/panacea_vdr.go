@@ -28,7 +28,7 @@ func NewPanaceaVDR(didCli didClient) *PanaceaVDR {
 	}
 }
 
-func (r *PanaceaVDR) Resolve(didID string, _ ...vdr.DIDMethodOption) (*did.DocResolution, error) {
+func (r *PanaceaVDR) Resolve(didID string, _ ...vdr.ResolveOption) (*did.DocResolution, error) {
 	didDocWithSeq, err := r.didCli.GetDID(context.Background(), didID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get DID document: %w", err)

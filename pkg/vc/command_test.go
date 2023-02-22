@@ -4,9 +4,10 @@ import (
 	"crypto/sha256"
 	"encoding/base64"
 	"fmt"
+	"testing"
+
 	"github.com/hyperledger/aries-framework-go/pkg/doc/did"
 	"github.com/hyperledger/aries-framework-go/pkg/framework/aries/api/vdr"
-	"testing"
 
 	"github.com/btcsuite/btcd/btcec"
 	"github.com/hyperledger/aries-framework-go/pkg/crypto/primitive/bbs12381g2pub"
@@ -238,7 +239,7 @@ func NewMockVDR(pubKeyBz []byte, pubKeyType string) *MockVDR {
 	}
 }
 
-func (v *MockVDR) Resolve(didID string, _ ...vdr.DIDMethodOption) (*did.DocResolution, error) {
+func (v *MockVDR) Resolve(didID string, _ ...vdr.ResolveOption) (*did.DocResolution, error) {
 	signingKey := did.VerificationMethod{
 		ID:         didID + "#key1",
 		Type:       v.pubKeyType,

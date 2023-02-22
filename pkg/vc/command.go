@@ -19,8 +19,8 @@ import (
 // SignCredential creates a verifiable credential by adding a proof to the credential.
 func (f *Framework) SignCredential(credential []byte, privKey []byte, opts *ProofOptions) ([]byte, error) {
 	cred, err := verifiable.ParseCredential(
-		credential, verifiable.WithDisabledProofCheck(), verifiable.WithJSONLDDocumentLoader(f.loader))
-
+		credential, verifiable.WithDisabledProofCheck(), verifiable.WithJSONLDDocumentLoader(f.loader),
+	)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse credential: %w", err)
 	}
@@ -73,7 +73,8 @@ func (f *Framework) DeriveCredential(vc []byte, frame []byte, nonce []byte, issu
 // CreatePresentationFromPD creates verifiable presentation based on presentation definition.
 func (f *Framework) CreatePresentationFromPD(credential []byte, pdBz []byte) (*verifiable.Presentation, error) {
 	cred, err := verifiable.ParseCredential(
-		credential, verifiable.WithDisabledProofCheck(), verifiable.WithJSONLDDocumentLoader(f.loader))
+		credential, verifiable.WithDisabledProofCheck(), verifiable.WithJSONLDDocumentLoader(f.loader),
+	)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse credential: %w", err)
 	}
@@ -83,7 +84,7 @@ func (f *Framework) CreatePresentationFromPD(credential []byte, pdBz []byte) (*v
 		return nil, fmt.Errorf("failed to parse presentation definition: %w", err)
 	}
 
-	return pd.CreateVP([]*verifiable.Credential{cred}, f.loader, verifiable.WithJSONLDDocumentLoader(f.loader))
+	return pd.CreateVP([]*verifiable.Credential{cred}, verifiable.WithJSONLDDocumentLoader(f.loader))
 }
 
 // SignPresentation creates a verifiable presentation by adding a proof to the presentation.
@@ -128,7 +129,7 @@ func (f *Framework) VerifyPresentation(vp []byte, opts ...VerificationOption) (*
 
 		// TODO: For now, check of constraints in presentation definition is not supported
 		// https://github.com/hyperledger/aries-framework-go/issues/2108
-		_, err = pd.Match(presentation, f.loader, presexch.WithCredentialOptions(verifiable.WithJSONLDDocumentLoader(f.loader)))
+		_, err = pd.Match(presentation, presexch.WithJSONLDDocumentLoader(f.loader))
 		if err != nil {
 			return nil, fmt.Errorf("is not matched with presentation definition: %w", err)
 		}
