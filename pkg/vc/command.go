@@ -128,7 +128,10 @@ func (f *Framework) VerifyPresentation(vp []byte, opts ...VerificationOption) (*
 
 		// TODO: For now, check of constraints in presentation definition is not supported
 		// https://github.com/hyperledger/aries-framework-go/issues/2108
-		_, err = pd.Match(presentation, f.loader, presexch.WithCredentialOptions(verifiable.WithJSONLDDocumentLoader(f.loader)))
+		_, err = pd.Match(presentation,
+			f.loader,
+			presexch.WithCredentialOptions(verifiable.WithJSONLDDocumentLoader(f.loader)),
+			presexch.WithCredentialOptions(verifiable.WithPublicKeyFetcher(f.resolver.PublicKeyFetcher())))
 		if err != nil {
 			return nil, fmt.Errorf("is not matched with presentation definition: %w", err)
 		}
