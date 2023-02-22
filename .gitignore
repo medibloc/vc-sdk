@@ -18,6 +18,6 @@
 
 *.aar
 *.jar
-*.framework
+*.xcframework
 
 .DS_Store

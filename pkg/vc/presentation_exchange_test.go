@@ -33,7 +33,7 @@ var (
 )
 
 const (
-	bbsKeyType         = "Bls12381G2Key2020"
+	bbsKeyType         = algoBLS12381G2Key2020
 	bbsSigType         = "BbsBlsSignature2020"
 	verificationMethod = "did:panacea:76e12ec712ebc6f1c221ebfeb1f#key1"
 )
