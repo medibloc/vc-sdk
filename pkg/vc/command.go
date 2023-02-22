@@ -131,7 +131,8 @@ func (f *Framework) VerifyPresentation(vp []byte, opts ...VerificationOption) (*
 		_, err = pd.Match(presentation,
 			f.loader,
 			presexch.WithCredentialOptions(verifiable.WithJSONLDDocumentLoader(f.loader)),
-			presexch.WithCredentialOptions(verifiable.WithPublicKeyFetcher(f.resolver.PublicKeyFetcher())))
+			presexch.WithCredentialOptions(verifiable.WithDisabledProofCheck()),
+		)
 		if err != nil {
 			return nil, fmt.Errorf("is not matched with presentation definition: %w", err)
 		}
