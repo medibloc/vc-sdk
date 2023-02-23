@@ -31,8 +31,8 @@ jobs:
       - name: Test
         run: make test
 
-#      - name: Build Android
-#        run: make build-android
+      - name: Build Android
+        run: make build-android
 
       - name: Build iOS
         if: matrix.platform == 'macos-latest'

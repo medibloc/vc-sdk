@@ -3,10 +3,15 @@ package vc
 import (
 	"crypto/sha256"
 	"fmt"
-	"github.com/hyperledger/aries-framework-go/pkg/crypto/primitive/bbs12381g2pub"
 	"strings"
 
 	"github.com/btcsuite/btcd/btcec"
+	"github.com/hyperledger/aries-framework-go/pkg/crypto/primitive/bbs12381g2pub"
+)
+
+const (
+	algoES256K            = "ES256K"
+	algoBLS12381G2Key2020 = "Bls12381G2Key2020"
 )
 
 type secp256k1Signer struct {
@@ -24,6 +29,10 @@ func (s *secp256k1Signer) Sign(doc []byte) ([]byte, error) {
 		return nil, fmt.Errorf("failed to sign: %w", err)
 	}
 	return serializeSig(sig), nil
+}
+
+func (s *secp256k1Signer) Alg() string {
+	return algoES256K
 }
 
 // Serialize signature to R || S.
@@ -57,6 +66,10 @@ func (s *bbsSigner) Sign(data []byte) ([]byte, error) {
 	msgs := s.textToLines(string(data))
 
 	return bbs12381g2pub.New().Sign(msgs, s.privKey)
+}
+
+func (s *bbsSigner) Alg() string {
+	return algoBLS12381G2Key2020
 }
 
 func (s *bbsSigner) textToLines(txt string) [][]byte {
