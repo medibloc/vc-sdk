@@ -36,7 +36,7 @@ func (f *Framework) SignCredential(credential []byte, privKey []byte, opts *Proo
 func (f *Framework) VerifyCredential(vc []byte) error {
 	_, err := verifiable.ParseCredential(
 		vc,
-		verifiable.WithPublicKeyFetcher(f.resolver.PublicKeyFetcher()),
+		verifiable.WithPublicKeyFetcher(f.vdrKeyResolver.PublicKeyFetcher()),
 		verifiable.WithJSONLDDocumentLoader(f.loader),
 	)
 	if err != nil {
@@ -112,7 +112,7 @@ func (f *Framework) VerifyPresentation(vp []byte, opts ...VerificationOption) (*
 	// verify VP
 	presentation, err := verifiable.ParsePresentation(
 		vp,
-		verifiable.WithPresPublicKeyFetcher(f.resolver.PublicKeyFetcher()),
+		verifiable.WithPresPublicKeyFetcher(f.vdrKeyResolver.PublicKeyFetcher()),
 		verifiable.WithPresJSONLDDocumentLoader(f.loader),
 	)
 	if err != nil {
