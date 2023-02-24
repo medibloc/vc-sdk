@@ -5,6 +5,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/btcsuite/btcd/btcec"
 
 	"github.com/gogo/protobuf/jsonpb"
 	"github.com/hyperledger/aries-framework-go/pkg/doc/did"
@@ -43,6 +44,23 @@ func (r *PanaceaVDR) Resolve(didID string, _ ...vdr.DIDMethodOption) (*did.DocRe
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse DID document: %w", err)
 	}
+
+	var vms []did.VerificationMethod
+	for _, vm := range doc.VerificationMethod {
+		var verificationMethod did.VerificationMethod
+		verificationMethod = vm
+		if btcec.IsCompressedPubKey(vm.Value) {
+			pubKey, err := btcec.ParsePubKey(vm.Value, btcec.S256())
+			if err != nil {
+				return nil, fmt.Errorf("invalid secp256k1 public key: %w", err)
+			}
+
+			verificationMethod.Value = pubKey.SerializeUncompressed()
+		}
+		vms = append(vms, verificationMethod)
+	}
+
+	doc.VerificationMethod = vms
 
 	return &did.DocResolution{
 		DIDDocument: doc,
