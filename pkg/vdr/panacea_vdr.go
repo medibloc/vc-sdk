@@ -60,6 +60,9 @@ func (r *PanaceaVDR) Resolve(didID string, _ ...vdr.DIDMethodOption) (*did.DocRe
 
 	doc.VerificationMethod = vms
 
+	docBz, err := doc.MarshalJSON()
+	fmt.Println(string(docBz))
+
 	return &did.DocResolution{
 		DIDDocument: doc,
 	}, nil
