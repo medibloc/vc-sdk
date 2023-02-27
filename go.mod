@@ -4,7 +4,7 @@ go 1.19
 
 require (
 	github.com/btcsuite/btcd v0.22.2
-	github.com/cosmos/cosmos-sdk v0.45.9
+	github.com/cosmos/cosmos-sdk v0.45.12
 	github.com/cosmos/go-bip39 v1.0.0
 	github.com/gogo/protobuf v1.3.3
 	github.com/hyperledger/aries-framework-go v0.1.9-0.20230222063211-02f80847168a
