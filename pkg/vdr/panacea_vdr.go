@@ -48,22 +48,31 @@ func (r *PanaceaVDR) Resolve(didID string, _ ...vdr.DIDMethodOption) (*did.DocRe
 	var vms []did.VerificationMethod
 	for _, vm := range doc.VerificationMethod {
 		if btcec.IsCompressedPubKey(vm.Value) {
-			fmt.Printf("orig len of %s: %d", string(vm.Value), len(vm.Value))
 			pubKey, err := btcec.ParsePubKey(vm.Value, btcec.S256())
 			if err != nil {
-				return nil, fmt.Errorf("invalid secp256k1 public key: %w", err)
+				return nil, fmt.Errorf("invalid secp256k1 public key of verification method: %w", err)
 			}
 
 			vm.Value = pubKey.SerializeUncompressed()
-			fmt.Printf("after len of %s: %d", string(vm.Value), len(vm.Value))
 		}
 		vms = append(vms, vm)
 	}
 
 	doc.VerificationMethod = vms
 
-	docBz, err := doc.MarshalJSON()
-	fmt.Println(string(docBz))
+	var auths []did.Verification
+	for _, auth := range doc.Authentication {
+		if btcec.IsCompressedPubKey(auth.VerificationMethod.Value) {
+			pubKey, err := btcec.ParsePubKey(auth.VerificationMethod.Value, btcec.S256())
+			if err != nil {
+				return nil, fmt.Errorf("invalid secp256k1 public key of authentication: %w", err)
+			}
+			auth.VerificationMethod.Value = pubKey.SerializeUncompressed()
+		}
+		auths = append(auths, auth)
+	}
+
+	doc.Authentication = auths
 
 	return &did.DocResolution{
 		DIDDocument: doc,

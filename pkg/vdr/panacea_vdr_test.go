@@ -165,8 +165,9 @@ func (m mockDIDClient) GetDID(_ context.Context, did string) (*didtypes.DIDDocum
 	case issuerDID:
 		return &didtypes.DIDDocumentWithSeq{
 			Document: &didtypes.DIDDocument{
-				Id:       issuerDID,
-				Contexts: &didtypes.JSONStringOrStrings{"https://www.w3.org/ns/did/v1"},
+				Id:              issuerDID,
+				Contexts:        &didtypes.JSONStringOrStrings{"https://www.w3.org/ns/did/v1"},
+				Authentications: []didtypes.VerificationRelationship{didtypes.NewVerificationRelationship(fmt.Sprintf("%s#key1", issuerDID))},
 				VerificationMethods: []*didtypes.VerificationMethod{
 					{
 						Controller:      issuerDID,
@@ -181,8 +182,9 @@ func (m mockDIDClient) GetDID(_ context.Context, did string) (*didtypes.DIDDocum
 	case holderDID:
 		return &didtypes.DIDDocumentWithSeq{
 			Document: &didtypes.DIDDocument{
-				Id:       holderDID,
-				Contexts: &didtypes.JSONStringOrStrings{"https://www.w3.org/ns/did/v1"},
+				Id:              holderDID,
+				Contexts:        &didtypes.JSONStringOrStrings{"https://www.w3.org/ns/did/v1"},
+				Authentications: []didtypes.VerificationRelationship{didtypes.NewVerificationRelationship(fmt.Sprintf("%s#key1", holderDID))},
 				VerificationMethods: []*didtypes.VerificationMethod{
 					{
 						Controller:      holderDID,
