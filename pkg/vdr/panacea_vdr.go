@@ -48,12 +48,14 @@ func (r *PanaceaVDR) Resolve(didID string, _ ...vdr.DIDMethodOption) (*did.DocRe
 	var vms []did.VerificationMethod
 	for _, vm := range doc.VerificationMethod {
 		if btcec.IsCompressedPubKey(vm.Value) {
+			fmt.Printf("orig len of %s: %d", string(vm.Value), len(vm.Value))
 			pubKey, err := btcec.ParsePubKey(vm.Value, btcec.S256())
 			if err != nil {
 				return nil, fmt.Errorf("invalid secp256k1 public key: %w", err)
 			}
 
 			vm.Value = pubKey.SerializeUncompressed()
+			fmt.Printf("after len of %s: %d", string(vm.Value), len(vm.Value))
 		}
 		vms = append(vms, vm)
 	}
