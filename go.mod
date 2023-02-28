@@ -10,6 +10,7 @@ require (
 	github.com/hyperledger/aries-framework-go v0.1.9-0.20230222063211-02f80847168a
 	github.com/hyperledger/aries-framework-go/component/storageutil v0.0.0-20220322085443-50e8f9bd208b
 	github.com/medibloc/panacea-core/v2 v2.0.5
+	github.com/mr-tron/base58 v1.2.0
 	github.com/piprate/json-gold v0.4.2
 	github.com/stretchr/testify v1.8.1
 	github.com/tendermint/tendermint v0.34.24
@@ -64,7 +65,6 @@ require (
 	github.com/minio/blake2b-simd v0.0.0-20160723061019-3f5f724cb5b1 // indirect
 	github.com/minio/sha256-simd v0.1.1 // indirect
 	github.com/mitchellh/mapstructure v1.5.0 // indirect
-	github.com/mr-tron/base58 v1.2.0 // indirect
 	github.com/multiformats/go-base32 v0.1.0 // indirect
 	github.com/multiformats/go-base36 v0.1.0 // indirect
 	github.com/multiformats/go-multibase v0.1.1 // indirect
