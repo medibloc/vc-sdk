@@ -10,26 +10,18 @@ import (
 	"github.com/hyperledger/aries-framework-go/pkg/doc/util"
 	"github.com/hyperledger/aries-framework-go/pkg/doc/verifiable"
 	"github.com/medibloc/vc-sdk/pkg/vc"
+	"github.com/mr-tron/base58"
+	"github.com/stretchr/testify/suite"
 	"github.com/tendermint/tendermint/crypto/secp256k1"
 	"testing"
 	"time"
 
 	didtypes "github.com/medibloc/panacea-core/v2/x/did/types"
-	"github.com/stretchr/testify/require"
 )
 
 const (
-	issuerMnemonic = "camera basket torch quarter knock wool group program betray grow pigeon noise object stadium bulk foot since reunion bag trim forum expect hire humble"
-	holderMnemonic = "large inquiry carbon expand wrist return prosper summer nasty nose chimney brain cotton obtain sell able book cave recipe asthma parent creek siren cancel"
-
 	ecdsaSigType          = "EcdsaSecp256k1Signature2019"
 	ecdsaVerificationType = "EcdsaSecp256k1VerificationKey2019"
-
-	issuerDID = "did:panacea:GU89om9nP7FUq4JHP8dMKnSaMe8VJ1YpQzf3TGN3fziM"
-	holderDID = "did:panacea:4gcve5eXaZkqEbJ8K4NTHiaehCyGTTGFZUPBcF6hiTot"
-
-	issuerPubKey = "28Diq1Q42qKCwMNFMXk8iVw5XhMrD48FxAbzxZdE1AvxY"
-	holderPubKey = "29WjuQdBA2W3mQy7u31DrLzSWp1jY1huJKe9TYzKNnCyY"
 )
 
 var (
@@ -37,16 +29,42 @@ var (
 	strFilterType = "string"
 )
 
-func TestPanaceaVDR_Resolve(t *testing.T) {
-	panaceaVDR := NewPanaceaVDR(mockDIDClient{})
+type panaceaVDRTestSuite struct {
+	suite.Suite
 
-	did := "did:panacea:abcd1234"
-	docRes, err := panaceaVDR.Resolve(did)
-	require.NoError(t, err)
-	require.Equal(t, did, docRes.DIDDocument.ID)
+	issuerPrivKey secp256k1.PrivKey
+	holderPrivKey secp256k1.PrivKey
+
+	issuerDID string
+	holderDID string
+
+	VDR *mockDIDClient
 }
 
-func TestPresentationExchange_WithPanaceaVDR(t *testing.T) {
+func TestPanaceaVDRTestSuite(t *testing.T) {
+	suite.Run(t, &panaceaVDRTestSuite{})
+}
+
+func (suite *panaceaVDRTestSuite) BeforeTest(_, _ string) {
+	issuerMnemonic, _ := newMnemonic()
+	holderMnemonic, _ := newMnemonic()
+
+	suite.issuerPrivKey, _ = generatePrivateKeyFromMnemonic(issuerMnemonic)
+	suite.holderPrivKey, _ = generatePrivateKeyFromMnemonic(holderMnemonic)
+
+	suite.issuerDID = didtypes.NewDID(suite.issuerPrivKey.PubKey().Bytes())
+	suite.holderDID = didtypes.NewDID(suite.holderPrivKey.PubKey().Bytes())
+
+	issuerPubKeyBase58 := base58.Encode(suite.issuerPrivKey.PubKey().Bytes())
+	holderPubKeyBase58 := base58.Encode(suite.holderPrivKey.PubKey().Bytes())
+
+	issuerDIDDoc := createDIDDoc(suite.issuerDID, issuerPubKeyBase58)
+	holderDIDDoc := createDIDDoc(suite.holderDID, holderPubKeyBase58)
+
+	suite.VDR = newMockDIDClient(issuerDIDDoc, holderDIDDoc)
+}
+
+func (suite *panaceaVDRTestSuite) TestPresentationExchange_WithPanaceaVDR() {
 	presDef := &presexch.PresentationDefinition{
 		ID:      "c1b88ce1-8460-4baf-8f16-4759a2f055fd",
 		Purpose: "To sell you a drink we need to know that you are an adult.",
@@ -82,20 +100,20 @@ func TestPresentationExchange_WithPanaceaVDR(t *testing.T) {
 		}},
 	}
 	pdBz, err := json.Marshal(presDef)
-	require.NoError(t, err)
+	suite.NoError(err)
 
 	cred := &verifiable.Credential{
 		ID:      "https://my-verifiable-credential.com",
 		Context: []string{verifiable.ContextURI},
 		Types:   []string{verifiable.VCType},
 		Issuer: verifiable.Issuer{
-			ID: issuerDID,
+			ID: suite.issuerDID,
 		},
 		Issued: &util.TimeWrapper{
 			Time: time.Time{},
 		},
 		Subject: map[string]interface{}{
-			"id":          holderDID,
+			"id":          suite.holderDID,
 			"first_name":  "Hansol",
 			"last_name":   "Lee",
 			"age":         21,
@@ -105,44 +123,67 @@ func TestPresentationExchange_WithPanaceaVDR(t *testing.T) {
 	}
 
 	vcBz, err := cred.MarshalJSON()
-	require.NoError(t, err)
+	suite.NoError(err)
 
-	panaceaVDR := NewPanaceaVDR(mockDIDClient{})
+	panaceaVDR := NewPanaceaVDR(suite.VDR)
 	framework, err := vc.NewFramework(panaceaVDR)
-	require.NoError(t, err)
+	suite.NoError(err)
 
-	issuerPrivKey, err := generatePrivateKeyFromMnemonic(issuerMnemonic)
-	require.NoError(t, err)
-
-	signedVC, err := framework.SignCredential(vcBz, issuerPrivKey, &vc.ProofOptions{
-		VerificationMethod: fmt.Sprintf("%s#key1", issuerDID),
+	signedVC, err := framework.SignCredential(vcBz, suite.issuerPrivKey, &vc.ProofOptions{
+		VerificationMethod: fmt.Sprintf("%s#key1", suite.issuerDID),
 		SignatureType:      ecdsaSigType,
 		Domain:             "https://my-domain.com",
 		Challenge:          "this is a challenge",
 		Created:            "2017-06-18T21:19:10Z",
 	})
-	require.NoError(t, err)
+	suite.NoError(err)
 
 	vp, err := framework.CreatePresentationFromPD(signedVC, pdBz)
-	require.NoError(t, err)
+	suite.NoError(err)
 
 	vpBz, err := json.Marshal(vp)
-	require.NoError(t, err)
+	suite.NoError(err)
 
-	holderPrivKey, err := generatePrivateKeyFromMnemonic(holderMnemonic)
-	require.NoError(t, err)
-
-	signedVP, err := framework.SignPresentation(vpBz, holderPrivKey, &vc.ProofOptions{
-		VerificationMethod: fmt.Sprintf("%s#key1", holderDID),
+	signedVP, err := framework.SignPresentation(vpBz, suite.holderPrivKey, &vc.ProofOptions{
+		VerificationMethod: fmt.Sprintf("%s#key1", suite.holderDID),
 		SignatureType:      ecdsaSigType,
 		Domain:             "https://my-domain.com",
 		Challenge:          "this is a challenge",
 		Created:            "2017-06-18T21:19:10Z",
 	})
-	require.NoError(t, err)
+	suite.NoError(err)
 
 	_, err = framework.VerifyPresentation(signedVP, vc.WithPresentationDefinition(pdBz))
-	require.NoError(t, err)
+	suite.NoError(err)
+}
+
+var _ didClient = &mockDIDClient{}
+
+type mockDIDClient struct {
+	vdr map[string]*didtypes.DIDDocumentWithSeq
+}
+
+func newMockDIDClient(didDocs ...*didtypes.DIDDocumentWithSeq) *mockDIDClient {
+	vdr := make(map[string]*didtypes.DIDDocumentWithSeq)
+	mockDIDCli := &mockDIDClient{vdr}
+
+	for _, doc := range didDocs {
+		mockDIDCli.vdr[doc.Document.Id] = doc
+	}
+
+	return mockDIDCli
+}
+
+func (m *mockDIDClient) GetDID(_ context.Context, did string) (*didtypes.DIDDocumentWithSeq, error) {
+	return m.vdr[did], nil
+}
+
+func newMnemonic() (string, error) {
+	entropy, err := bip39.NewEntropy(256)
+	if err != nil {
+		return "", err
+	}
+	return bip39.NewMnemonic(entropy)
 }
 
 func generatePrivateKeyFromMnemonic(mnemonic string) (secp256k1.PrivKey, error) {
@@ -156,50 +197,21 @@ func generatePrivateKeyFromMnemonic(mnemonic string) (secp256k1.PrivKey, error) 
 	return hd.DerivePrivateKeyForPath(master, ch, hdPath)
 }
 
-var _ didClient = &mockDIDClient{}
-
-type mockDIDClient struct{}
-
-func (m mockDIDClient) GetDID(_ context.Context, did string) (*didtypes.DIDDocumentWithSeq, error) {
-	switch did {
-	case issuerDID:
-		return &didtypes.DIDDocumentWithSeq{
-			Document: &didtypes.DIDDocument{
-				Id:              issuerDID,
-				Contexts:        &didtypes.JSONStringOrStrings{"https://www.w3.org/ns/did/v1"},
-				Authentications: []didtypes.VerificationRelationship{didtypes.NewVerificationRelationship(fmt.Sprintf("%s#key1", issuerDID))},
-				VerificationMethods: []*didtypes.VerificationMethod{
-					{
-						Controller:      issuerDID,
-						Id:              fmt.Sprintf("%s#key1", issuerDID),
-						PublicKeyBase58: issuerPubKey,
-						Type:            ecdsaVerificationType,
-					},
+func createDIDDoc(did, pubKeyBase58 string) *didtypes.DIDDocumentWithSeq {
+	return &didtypes.DIDDocumentWithSeq{
+		Document: &didtypes.DIDDocument{
+			Id:              did,
+			Contexts:        &didtypes.JSONStringOrStrings{"https://www.w3.org/ns/did/v1"},
+			Authentications: []didtypes.VerificationRelationship{didtypes.NewVerificationRelationship(fmt.Sprintf("%s#key1", did))},
+			VerificationMethods: []*didtypes.VerificationMethod{
+				{
+					Controller:      did,
+					Id:              fmt.Sprintf("%s#key1", did),
+					PublicKeyBase58: pubKeyBase58,
+					Type:            ecdsaVerificationType,
 				},
 			},
-			Sequence: 0,
-		}, nil
-	case holderDID:
-		return &didtypes.DIDDocumentWithSeq{
-			Document: &didtypes.DIDDocument{
-				Id:              holderDID,
-				Contexts:        &didtypes.JSONStringOrStrings{"https://www.w3.org/ns/did/v1"},
-				Authentications: []didtypes.VerificationRelationship{didtypes.NewVerificationRelationship(fmt.Sprintf("%s#key1", holderDID))},
-				VerificationMethods: []*didtypes.VerificationMethod{
-					{
-						Controller:      holderDID,
-						Id:              fmt.Sprintf("%s#key1", holderDID),
-						PublicKeyBase58: holderPubKey,
-						Type:            ecdsaVerificationType,
-					},
-				},
-			},
-			Sequence: 0,
-		}, nil
-	default:
-		didDoc := didtypes.NewDIDDocument(did)
-		return &didtypes.DIDDocumentWithSeq{
-			Document: &didDoc,
-		}, nil
+		},
+		Sequence: 0,
 	}
 }
