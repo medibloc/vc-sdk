@@ -17,11 +17,11 @@ type Framework struct {
 	resolver *verifiable.VDRKeyResolver
 }
 
-type DidResolver interface {
+type didResolver interface {
 	Resolve(did string, opts ...vdr.DIDMethodOption) (*did.DocResolution, error)
 }
 
-func NewFramework(vdr DidResolver) (*Framework, error) {
+func NewFramework(vdr didResolver) (*Framework, error) {
 	storeProvider := mem.NewProvider()
 	contextStore, err := ldstore.NewContextStore(storeProvider)
 	if err != nil {

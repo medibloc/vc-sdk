@@ -9,11 +9,8 @@ import (
 	"github.com/hyperledger/aries-framework-go/pkg/doc/did"
 	"github.com/hyperledger/aries-framework-go/pkg/framework/aries/api/vdr"
 	didtypes "github.com/medibloc/panacea-core/v2/x/did/types"
-	"github.com/medibloc/vc-sdk/pkg/vc"
 	"github.com/mr-tron/base58"
 )
-
-var _ vc.DidResolver = (*PanaceaVDR)(nil)
 
 type didClient interface {
 	GetDID(context.Context, string) (*didtypes.DIDDocumentWithSeq, error)
