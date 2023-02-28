@@ -3,17 +3,17 @@ package vdr
 import (
 	"bytes"
 	"context"
-	"errors"
 	"fmt"
 	"github.com/btcsuite/btcd/btcec"
-
 	"github.com/gogo/protobuf/jsonpb"
 	"github.com/hyperledger/aries-framework-go/pkg/doc/did"
 	"github.com/hyperledger/aries-framework-go/pkg/framework/aries/api/vdr"
 	didtypes "github.com/medibloc/panacea-core/v2/x/did/types"
+	"github.com/medibloc/vc-sdk/pkg/vc"
+	"github.com/mr-tron/base58"
 )
 
-var _ vdr.Registry = &PanaceaVDR{}
+var _ vc.DidResolver = (*PanaceaVDR)(nil)
 
 type didClient interface {
 	GetDID(context.Context, string) (*didtypes.DIDDocumentWithSeq, error)
@@ -35,6 +35,27 @@ func (r *PanaceaVDR) Resolve(didID string, _ ...vdr.DIDMethodOption) (*did.DocRe
 		return nil, fmt.Errorf("failed to get DID document: %w", err)
 	}
 
+	var vms []*didtypes.VerificationMethod
+	for _, vm := range didDocWithSeq.Document.VerificationMethods {
+		pubKeyBz, err := base58.Decode(vm.PublicKeyBase58)
+		if err != nil {
+			return nil, fmt.Errorf("invalid base58 encoded public key: %w", err)
+		}
+
+		if btcec.IsCompressedPubKey(pubKeyBz) {
+			pubKey, err := btcec.ParsePubKey(pubKeyBz, btcec.S256())
+			if err != nil {
+				return nil, fmt.Errorf("invalid secp256k1 public key of verification method: %w", err)
+			}
+
+			pubKeyStr := base58.Encode(pubKey.SerializeUncompressed())
+			vm.PublicKeyBase58 = pubKeyStr
+		}
+		vms = append(vms, vm)
+	}
+
+	didDocWithSeq.Document.VerificationMethods = vms
+
 	docBuf := new(bytes.Buffer)
 	if err := new(jsonpb.Marshaler).Marshal(docBuf, didDocWithSeq.Document); err != nil {
 		return nil, fmt.Errorf("failed to marshal DID document: %w", err)
@@ -45,52 +66,7 @@ func (r *PanaceaVDR) Resolve(didID string, _ ...vdr.DIDMethodOption) (*did.DocRe
 		return nil, fmt.Errorf("failed to parse DID document: %w", err)
 	}
 
-	var vms []did.VerificationMethod
-	for _, vm := range doc.VerificationMethod {
-		if btcec.IsCompressedPubKey(vm.Value) {
-			pubKey, err := btcec.ParsePubKey(vm.Value, btcec.S256())
-			if err != nil {
-				return nil, fmt.Errorf("invalid secp256k1 public key of verification method: %w", err)
-			}
-
-			vm.Value = pubKey.SerializeUncompressed()
-		}
-		vms = append(vms, vm)
-	}
-
-	doc.VerificationMethod = vms
-
-	var auths []did.Verification
-	for _, auth := range doc.Authentication {
-		if btcec.IsCompressedPubKey(auth.VerificationMethod.Value) {
-			pubKey, err := btcec.ParsePubKey(auth.VerificationMethod.Value, btcec.S256())
-			if err != nil {
-				return nil, fmt.Errorf("invalid secp256k1 public key of authentication: %w", err)
-			}
-			auth.VerificationMethod.Value = pubKey.SerializeUncompressed()
-		}
-		auths = append(auths, auth)
-	}
-
-	doc.Authentication = auths
-
 	return &did.DocResolution{
 		DIDDocument: doc,
 	}, nil
-}
-
-func (r *PanaceaVDR) Create(_ string, _ *did.Doc, _ ...vdr.DIDMethodOption) (*did.DocResolution, error) {
-	return nil, errors.New("not implemented")
-}
-
-func (r *PanaceaVDR) Update(_ *did.Doc, _ ...vdr.DIDMethodOption) error {
-	return errors.New("not implemented")
-}
-
-func (r *PanaceaVDR) Deactivate(_ string, _ ...vdr.DIDMethodOption) error {
-	return errors.New("not implemented")
-}
-
-func (r *PanaceaVDR) Close() error {
-	return errors.New("not implemented")
 }
