@@ -2,6 +2,7 @@ package vc
 
 import (
 	"github.com/hyperledger/aries-framework-go/component/storageutil/mem"
+	"github.com/hyperledger/aries-framework-go/pkg/doc/did"
 	"github.com/hyperledger/aries-framework-go/pkg/doc/ld"
 	"github.com/hyperledger/aries-framework-go/pkg/doc/verifiable"
 	"github.com/hyperledger/aries-framework-go/pkg/framework/aries/api/vdr"
@@ -16,7 +17,11 @@ type Framework struct {
 	resolver *verifiable.VDRKeyResolver
 }
 
-func NewFramework(vdr vdr.Registry) (*Framework, error) {
+type didResolver interface {
+	Resolve(did string, opts ...vdr.DIDMethodOption) (*did.DocResolution, error)
+}
+
+func NewFramework(vdr didResolver) (*Framework, error) {
 	storeProvider := mem.NewProvider()
 	contextStore, err := ldstore.NewContextStore(storeProvider)
 	if err != nil {
