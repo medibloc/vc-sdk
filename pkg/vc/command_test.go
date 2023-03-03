@@ -264,29 +264,24 @@ func NewMockVDR(pubKeyBz []byte, pubKeyType string) *MockVDR {
 	return &MockVDR{
 		pubKeyBz:   pubKeyBz,
 		pubKeyType: pubKeyType,
-		did:        didtypes.NewDID(pubKeyBz),
 	}
 }
 
 func (v *MockVDR) Resolve(didID string, _ ...vdr.DIDMethodOption) (*did.DocResolution, error) {
-	if didID == v.did {
-		signingKey := did.VerificationMethod{
-			ID:         didID + "#key1",
-			Type:       v.pubKeyType,
-			Controller: didID,
-			Value:      v.pubKeyBz,
-		}
-
-		return &did.DocResolution{
-			DIDDocument: &did.Doc{
-				Context:            []string{"https://w3id.org/did/v1"},
-				ID:                 didID,
-				VerificationMethod: []did.VerificationMethod{signingKey},
-			},
-		}, nil
-	} else {
-		return nil, fmt.Errorf("failed to resolve DID")
+	signingKey := did.VerificationMethod{
+		ID:         didID + "#key1",
+		Type:       v.pubKeyType,
+		Controller: didID,
+		Value:      v.pubKeyBz,
 	}
+
+	return &did.DocResolution{
+		DIDDocument: &did.Doc{
+			Context:            []string{"https://w3id.org/did/v1"},
+			ID:                 didID,
+			VerificationMethod: []did.VerificationMethod{signingKey},
+		},
+	}, nil
 }
 
 func (v *MockVDR) Create(_ string, _ *did.Doc, _ ...vdr.DIDMethodOption) (*did.DocResolution, error) {
