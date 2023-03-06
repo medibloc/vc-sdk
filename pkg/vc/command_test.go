@@ -4,10 +4,11 @@ import (
 	"crypto/sha256"
 	"encoding/base64"
 	"fmt"
+	"testing"
+
 	"github.com/hyperledger/aries-framework-go/pkg/doc/did"
 	"github.com/hyperledger/aries-framework-go/pkg/framework/aries/api/vdr"
 	didtypes "github.com/medibloc/panacea-core/v2/x/did/types"
-	"testing"
 
 	"github.com/btcsuite/btcd/btcec"
 	"github.com/hyperledger/aries-framework-go/pkg/crypto/primitive/bbs12381g2pub"
@@ -257,7 +258,6 @@ func TestFullScenarioWithBBS(t *testing.T) {
 type MockVDR struct {
 	pubKeyBz   []byte
 	pubKeyType string
-	did        string
 }
 
 func NewMockVDR(pubKeyBz []byte, pubKeyType string) *MockVDR {
