@@ -4,14 +4,43 @@ import (
 	"crypto/sha256"
 	"encoding/base64"
 	"fmt"
+	"testing"
+
 	"github.com/hyperledger/aries-framework-go/pkg/doc/did"
 	"github.com/hyperledger/aries-framework-go/pkg/framework/aries/api/vdr"
-	"testing"
+	didtypes "github.com/medibloc/panacea-core/v2/x/did/types"
 
 	"github.com/btcsuite/btcd/btcec"
 	"github.com/hyperledger/aries-framework-go/pkg/crypto/primitive/bbs12381g2pub"
 	"github.com/stretchr/testify/require"
 )
+
+func TestDIDAuthentication_Success(t *testing.T) {
+	holderPrivKey, err := btcec.NewPrivateKey(btcec.S256())
+	require.NoError(t, err)
+
+	mockVDR := NewMockVDR(holderPrivKey.PubKey().SerializeUncompressed(), "EcdsaSecp256k1VerificationKey2019")
+	f, err := NewFramework(mockVDR)
+	require.NoError(t, err)
+
+	holderDID := didtypes.NewDID(holderPrivKey.PubKey().SerializeCompressed())
+
+	proofOpts := &ProofOptions{
+		Controller:         holderDID,
+		VerificationMethod: fmt.Sprintf("%s#key1", holderDID),
+		SignatureType:      "EcdsaSecp256k1Signature2019",
+		Domain:             "https://my-domain.com",
+		Challenge:          "this is a challenge",
+		Created:            "2017-06-18T21:19:10Z",
+		ProofPurpose:       "authentication",
+	}
+
+	didAuth, err := f.AuthenticateDID(holderPrivKey.Serialize(), proofOpts)
+	require.NoError(t, err)
+
+	_, err = f.VerifyPresentation(didAuth)
+	require.NoError(t, err)
+}
 
 func TestFullScenarioWithSecp256k1(t *testing.T) {
 	cred := `{"@context": ["https://www.w3.org/2018/credentials/v1","https://www.w3.org/2018/credentials/examples/v1"],

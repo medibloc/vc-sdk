@@ -100,6 +100,27 @@ func (f *Framework) SignPresentation(presentation []byte, privKey []byte, opts *
 	return pres.MarshalJSON()
 }
 
+// AuthenticateDID creates a verifiable presentation for DID authentication
+// https://w3c-ccg.github.io/vp-request-spec/#did-authentication
+func (f *Framework) AuthenticateDID(privKey []byte, opts *ProofOptions) ([]byte, error) {
+	presentation, err := verifiable.NewPresentation()
+	if err != nil {
+		return nil, fmt.Errorf("failed to create new presentation for DID authentication: %w", err)
+	}
+
+	if len(opts.Controller) == 0 {
+		return nil, fmt.Errorf("controller cannot be empty")
+	}
+
+	presentation.Holder = opts.Controller
+
+	if err := f.addProof(presentation, privKey, opts); err != nil {
+		return nil, fmt.Errorf("failed to add proof to DID authentication: %w", err)
+	}
+
+	return presentation.MarshalJSON()
+}
+
 // VerifyPresentation verifies a proof in the verifiable presentation.
 // If there is a presentation definition provided, also verifies that the presentation meets the requirements.
 func (f *Framework) VerifyPresentation(vp []byte, opts ...VerificationOption) (*verifiable.Presentation, error) {
@@ -204,6 +225,7 @@ type provable interface {
 
 // ProofOptions is model to allow the dynamic proofing options by the user.
 type ProofOptions struct {
+	Controller         string `json:"controller,omitempty"`
 	VerificationMethod string `json:"verificationMethod,omitempty"`
 	SignatureType      string `json:"signatureType,omitempty"`
 	ProofPurpose       string `json:"proofPurpose,omitempty"`
