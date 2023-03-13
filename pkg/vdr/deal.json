@@ -1,0 +1,10 @@
+{
+  "budget": {
+    "denom": "umed",
+    "amount": "1000000"
+  },
+  "max_num_data": 10,
+  "consumer_address": "panacea1w7aj4533lr580dwq7rvazl95peqr4ww8lpaxsr",
+  "presentation_definition": "eyJpZCI6ImMxYjg4Y2UxLTg0NjAtNGJhZi04ZjE2LTQ3NTlhMmYwNTVmZCIsInB1cnBvc2UiOiJUbyBzZWxsIHlvdSBhIGRyaW5rIHdlIG5lZWQgdG8ga25vdyB0aGF0IHlvdSBhcmUgYW4gYWR1bHQuIiwiaW5wdXRfZGVzY3JpcHRvcnMiOlt7ImlkIjoiYWdlX2Rlc2NyaXB0b3IiLCJwdXJwb3NlIjoiWW91ciBhZ2Ugc2hvdWxkIGJlIGdyZWF0ZXIgb3IgZXF1YWwgdG8gMTguIiwic2NoZW1hIjpbeyJ1cmkiOiJodHRwczovL3d3dy53My5vcmcvMjAxOC9jcmVkZW50aWFscyNWZXJpZmlhYmxlQ3JlZGVudGlhbCJ9XSwiY29uc3RyYWludHMiOnsiZmllbGRzIjpbeyJwYXRoIjpbIiQuY3JlZGVudGlhbFN1YmplY3QuYWdlIl0sImZpbHRlciI6eyJ0eXBlIjoiaW50ZWdlciIsIm1pbmltdW0iOjE4LCJtYXhpbXVtIjozMH19LHsicGF0aCI6WyIkLmNyZWRlbnRpYWxTdWJqZWN0Lm5hdGlvbmFsaXR5Il0sImZpbHRlciI6eyJ0eXBlIjoic3RyaW5nIiwiZW51bSI6WyJLb3JlYSJdfX1dfX1dfQ==",
+  "consumer_service_endpoint": "http://127.0.0.1:8060"
+}

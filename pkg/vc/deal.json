@@ -1,0 +1,13 @@
+{
+  "data_schema": [
+    "https://json.schemastore.org/github-issue-forms.json"
+  ],
+  "budget": {
+    "denom": "umed",
+    "amount": "1000000"
+  },
+  "max_num_data": 10,
+  "consumer_address": "panacea1w7aj4533lr580dwq7rvazl95peqr4ww8lpaxsr",
+  "presentation_definition": "eyJpZCI6ImMxYjg4Y2UxLTg0NjAtNGJhZi04ZjE2LTQ3NTlhMmYwNTVmZCIsInB1cnBvc2UiOiJUbyBzZWxsIHlvdSBhIGRyaW5rIHdlIG5lZWQgdG8ga25vdyB0aGF0IHlvdSBhcmUgYW4gYWR1bHQuIiwiaW5wdXRfZGVzY3JpcHRvcnMiOlt7ImlkIjoiYWdlX2Rlc2NyaXB0b3IiLCJwdXJwb3NlIjoiWW91ciBhZ2Ugc2hvdWxkIGJlIGdyZWF0ZXIgb3IgZXF1YWwgdG8gMTguIiwic2NoZW1hIjpbeyJ1cmkiOiJodHRwczovL3d3dy53My5vcmcvMjAxOC9jcmVkZW50aWFscyNWZXJpZmlhYmxlQ3JlZGVudGlhbCJ9LHsidXJpIjoiaHR0cHM6Ly93M2lkLm9yZy9zZWN1cml0eS9iYnMvdjEifV0sImNvbnN0cmFpbnRzIjp7ImxpbWl0X2Rpc2Nsb3N1cmUiOiJyZXF1aXJlZCIsImZpZWxkcyI6W3sicGF0aCI6WyIkLmNyZWRlbnRpYWxTdWJqZWN0LmFnZSJdLCJmaWx0ZXIiOnsidHlwZSI6ImludGVnZXIiLCJtaW5pbXVtIjoxOCwibWF4aW11bSI6MzB9fSx7InBhdGgiOlsiJC5jcmVkZW50aWFsU3ViamVjdC5uYXRpb25hbGl0eSJdLCJmaWx0ZXIiOnsidHlwZSI6InN0cmluZyIsImVudW0iOlsiS29yZWEiXX19XX19XX0=",
+  "consumer_service_endpoint": "http://127.0.0.1:8060"
+}
