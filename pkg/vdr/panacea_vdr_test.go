@@ -4,6 +4,9 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"testing"
+	"time"
+
 	"github.com/cosmos/cosmos-sdk/crypto/hd"
 	"github.com/cosmos/go-bip39"
 	"github.com/hyperledger/aries-framework-go/pkg/doc/presexch"
@@ -13,8 +16,6 @@ import (
 	"github.com/mr-tron/base58"
 	"github.com/stretchr/testify/suite"
 	"github.com/tendermint/tendermint/crypto/secp256k1"
-	"testing"
-	"time"
 
 	didtypes "github.com/medibloc/panacea-core/v2/x/did/types"
 )
@@ -62,6 +63,10 @@ func (suite *panaceaVDRTestSuite) BeforeTest(_, _ string) {
 	holderDIDDoc := createDIDDoc(suite.holderDID, holderPubKeyBase58)
 
 	suite.VDR = newMockDIDClient(issuerDIDDoc, holderDIDDoc)
+}
+
+func (suite *panaceaVDRTestSuite) AfterTest(_, _ string) {
+	suite.VDR.Close()
 }
 
 func (suite *panaceaVDRTestSuite) TestPresentationExchange_WithPanaceaVDR() {
@@ -172,6 +177,10 @@ func newMockDIDClient(didDocs ...*didtypes.DIDDocumentWithSeq) *mockDIDClient {
 	}
 
 	return mockDIDCli
+}
+
+func (m *mockDIDClient) Close() error {
+	return nil
 }
 
 func (m *mockDIDClient) GetDID(_ context.Context, did string) (*didtypes.DIDDocumentWithSeq, error) {
