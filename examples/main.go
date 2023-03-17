@@ -60,7 +60,7 @@ func main() {
 	})
 
 	// verify the verifiable credential (with proof verification)
-	if err = framework.VerifyCredential(verifiableCredential); err != nil {
+	if err := framework.VerifyCredential(verifiableCredential); err != nil {
 		log.Panic(err)
 	}
 
